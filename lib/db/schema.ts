@@ -1,4 +1,15 @@
-import { bigint, integer, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  bigint,
+  date,
+  integer,
+  jsonb,
+  pgTable,
+  primaryKey,
+  serial,
+  text,
+  timestamp,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
 import type { PlayerProfile } from "../brawlstars";
 
 // Пользователь = Telegram-аккаунт. Храним минимум данных.
@@ -29,4 +40,36 @@ export const playerProfiles = pgTable("player_profiles", {
   fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull(),
 });
 
+// Бои игроков. Battlelog отдаёт только последние 25 боёв, поэтому крон регулярно
+// сохраняет новые сюда. Дубликаты отсекаем по (тег игрока + время боя).
+export const battles = pgTable(
+  "battles",
+  {
+    id: serial("id").primaryKey(),
+    playerTag: text("player_tag").notNull(),
+    battleTime: timestamp("battle_time", { withTimezone: true }).notNull(),
+    mode: text("mode").notNull(),
+    map: text("map"),
+    type: text("type"),
+    // "victory" | "defeat" | "draw"; в «Столкновении» результата нет — там место (rank)
+    result: text("result"),
+    rank: integer("rank"),
+    trophyChange: integer("trophy_change"),
+    brawlerId: integer("brawler_id"),
+  },
+  (t) => [uniqueIndex("battles_player_time_idx").on(t.playerTag, t.battleTime)],
+);
+
+// Трофеи игрока по дням — для графика. Одна запись на игрока в день (последнее значение).
+export const trophyHistory = pgTable(
+  "trophy_history",
+  {
+    playerTag: text("player_tag").notNull(),
+    day: date("day", { mode: "string" }).notNull(),
+    trophies: integer("trophies").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.playerTag, t.day] })],
+);
+
 export type User = typeof users.$inferSelect;
+export type BattleRow = typeof battles.$inferSelect;

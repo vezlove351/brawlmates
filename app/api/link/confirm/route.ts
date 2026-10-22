@@ -1,5 +1,7 @@
 import { eq } from "drizzle-orm";
+import { after } from "next/server";
 import { authenticate } from "@/lib/auth";
+import { syncPlayer } from "@/lib/battles";
 import { BrawlStarsError, getPlayer } from "@/lib/brawlstars";
 import { getDb } from "@/lib/db";
 import { tagLinkRequests, users } from "@/lib/db/schema";
@@ -50,6 +52,14 @@ export async function POST(request: Request): Promise<Response> {
     db.update(users).set({ playerTag: player.tag }).where(eq(users.id, tgUser.id)),
     db.delete(tagLinkRequests).where(eq(tagLinkRequests.userId, tgUser.id)),
   ]);
+
+  // Сразу сохраняем бои и первую точку графика — уже после ответа, чтобы игрок не ждал.
+  const tag = player.tag;
+  after(() =>
+    syncPlayer(tag).catch((err: unknown) =>
+      console.error("Первая синхронизация боёв не удалась:", err instanceof Error ? err.message : err),
+    ),
+  );
 
   return Response.json({ player: { tag: player.tag, name: player.name } });
 }

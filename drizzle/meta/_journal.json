@@ -22,6 +22,13 @@
       "when": 1792673614046,
       "tag": "0002_giant_mother_askani",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792674811887,
+      "tag": "0003_salty_fenris",
+      "breakpoints": true
     }
   ]
 }

@@ -161,3 +161,71 @@ export async function fetchPlayerProfile(tag: string): Promise<PlayerProfile> {
     })),
   };
 }
+
+// --- История боёв (battlelog) ---
+
+interface ApiBattlePlayer {
+  tag: string;
+  brawler?: { id: number };
+  // В дуэлях у игрока несколько бравлеров
+  brawlers?: { id: number }[];
+}
+
+interface ApiBattle {
+  battleTime: string;
+  event: { mode?: string; map?: string | null };
+  battle: {
+    mode?: string;
+    type?: string;
+    result?: string;
+    rank?: number;
+    trophyChange?: number;
+    teams?: ApiBattlePlayer[][];
+    players?: ApiBattlePlayer[];
+  };
+}
+
+export interface Battle {
+  battleTime: Date;
+  mode: string;
+  map: string | null;
+  type: string | null;
+  result: string | null;
+  rank: number | null;
+  trophyChange: number | null;
+  brawlerId: number | null;
+}
+
+// "20261022T130858.000Z" → Date
+function parseBattleTime(value: string): Date {
+  const m = value.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/);
+  if (!m) return new Date(Number.NaN);
+  return new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`);
+}
+
+// Последние ~25 боёв игрока.
+export async function fetchBattleLog(tag: string): Promise<Battle[]> {
+  const data = await apiGet<{ items: ApiBattle[] }>(`${playerPath(tag)}/battlelog`);
+
+  return data.items
+    .map((item) => {
+      const { event, battle } = item;
+      // Ищем самого игрока среди участников, чтобы узнать, каким бравлером он играл.
+      const everyone = [...(battle.teams?.flat() ?? []), ...(battle.players ?? [])];
+      const me = everyone.find((p) => p.tag === tag);
+      // event.mode точнее (например, «5 на 5»), но иногда приходит "unknown".
+      const mode = event.mode && event.mode !== "unknown" ? event.mode : (battle.mode ?? "unknown");
+
+      return {
+        battleTime: parseBattleTime(item.battleTime),
+        mode,
+        map: event.map ?? null,
+        type: battle.type ?? null,
+        result: battle.result ?? null,
+        rank: battle.rank ?? null,
+        trophyChange: battle.trophyChange ?? null,
+        brawlerId: me?.brawler?.id ?? me?.brawlers?.[0]?.id ?? null,
+      };
+    })
+    .filter((b) => !Number.isNaN(b.battleTime.getTime()));
+}
