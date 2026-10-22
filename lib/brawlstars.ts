@@ -20,11 +20,9 @@ export function iconUrl(iconId: number): string {
   return `/icons/${iconId}.png`;
 }
 
-export interface Player {
-  tag: string;
-  name: string;
-  icon: { id: number };
-  trophies: number;
+// Картинка любой иконки профиля (с фанатского CDN Brawlify).
+export function remoteIconUrl(iconId: number): string {
+  return `https://cdn.brawlify.com/profile-icons/regular/${iconId}.png`;
 }
 
 // Ошибка с сообщением, которое можно показать игроку.
@@ -50,16 +48,15 @@ function friendlyMessage(status: number): string {
   }
 }
 
-// Загружает игрока по тегу. Без кеша: при подтверждении иконки нужны свежие данные.
-export async function getPlayer(tag: string): Promise<Player> {
+// Общий запрос к API. Без кеша Next.js — кешируем сами там, где нужно.
+async function apiGet<T>(path: string): Promise<T> {
   const baseUrl = process.env.BS_API_BASE_URL;
   const token = process.env.BS_API_TOKEN;
   if (!baseUrl || !token) throw new Error("Не заданы BS_API_BASE_URL или BS_API_TOKEN");
 
   let res: Response;
   try {
-    // encodeURIComponent превращает "#" в "%23", как требует API.
-    res = await fetch(`${baseUrl}/players/${encodeURIComponent(tag)}`, {
+    res = await fetch(`${baseUrl}${path}`, {
       headers: { authorization: `Bearer ${token}` },
       cache: "no-store",
       signal: AbortSignal.timeout(10_000),
@@ -73,7 +70,69 @@ export async function getPlayer(tag: string): Promise<Player> {
     if (res.status === 403) console.error("Brawl Stars API: 403 — проверь IP в ключе");
     throw new BrawlStarsError(friendlyMessage(res.status), res.status === 404 ? 404 : 502);
   }
+  return (await res.json()) as T;
+}
 
-  const data = (await res.json()) as Player;
-  return { tag: data.tag, name: data.name, icon: { id: data.icon.id }, trophies: data.trophies };
+// encodeURIComponent превращает "#" в "%23", как требует API.
+function playerPath(tag: string): string {
+  return `/players/${encodeURIComponent(tag)}`;
+}
+
+// --- Короткие данные игрока (для привязки тега) ---
+
+export interface Player {
+  tag: string;
+  name: string;
+  icon: { id: number };
+}
+
+export async function getPlayer(tag: string): Promise<Player> {
+  const data = await apiGet<Player>(playerPath(tag));
+  return { tag: data.tag, name: data.name, icon: { id: data.icon.id } };
+}
+
+// --- Профиль для карточки игрока ---
+
+// Так поля называются в ответе API (только те, что нам нужны).
+interface ApiPlayer {
+  tag: string;
+  name: string;
+  icon: { id: number };
+  trophies: number;
+  highestTrophies: number;
+  expLevel: number;
+  club: { tag?: string; name?: string };
+  "3vs3Victories": number;
+  soloVictories: number;
+  duoVictories: number;
+}
+
+export interface PlayerProfile {
+  tag: string;
+  name: string;
+  iconId: number;
+  trophies: number;
+  highestTrophies: number;
+  expLevel: number;
+  club: { tag: string; name: string } | null;
+  victories3v3: number;
+  victoriesSolo: number;
+  victoriesDuo: number;
+}
+
+export async function fetchPlayerProfile(tag: string): Promise<PlayerProfile> {
+  const p = await apiGet<ApiPlayer>(playerPath(tag));
+  return {
+    tag: p.tag,
+    name: p.name,
+    iconId: p.icon.id,
+    trophies: p.trophies,
+    highestTrophies: p.highestTrophies,
+    expLevel: p.expLevel,
+    // Если игрок не в клубе, API присылает пустой объект {}.
+    club: p.club?.tag && p.club.name ? { tag: p.club.tag, name: p.club.name } : null,
+    victories3v3: p["3vs3Victories"],
+    victoriesSolo: p.soloVictories,
+    victoriesDuo: p.duoVictories,
+  };
 }

@@ -1,4 +1,5 @@
-import { bigint, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { bigint, integer, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import type { PlayerProfile } from "../brawlstars";
 
 // Пользователь = Telegram-аккаунт. Храним минимум данных.
 export const users = pgTable("users", {
@@ -19,6 +20,13 @@ export const tagLinkRequests = pgTable("tag_link_requests", {
   playerTag: text("player_tag").notNull(),
   iconId: integer("icon_id").notNull(),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});
+
+// Кеш профилей из Brawl Stars API: не дёргаем API чаще раза в 5 минут на игрока.
+export const playerProfiles = pgTable("player_profiles", {
+  tag: text("tag").primaryKey(),
+  data: jsonb("data").$type<PlayerProfile>().notNull(),
+  fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull(),
 });
 
 export type User = typeof users.$inferSelect;

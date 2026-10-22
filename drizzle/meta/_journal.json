@@ -15,6 +15,13 @@
       "when": 1792672155599,
       "tag": "0001_nappy_vindicator",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792673614046,
+      "tag": "0002_giant_mother_askani",
+      "breakpoints": true
     }
   ]
 }
