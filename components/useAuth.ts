@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { initData, useSignal } from "@telegram-apps/sdk-react";
+import { apiPost } from "@/lib/api-client";
 import { useTelegramStatus } from "./TelegramProvider";
 
 export interface AuthUser {
   firstName: string;
   createdAt: string;
+  playerTag: string | null;
 }
 
 export type AuthState =
@@ -15,9 +17,9 @@ export type AuthState =
   | { status: "error"; message: string }
   | { status: "ok"; user: AuthUser };
 
-// Отправляет initData на сервер. Имя берём из ответа сервера,
+// Входит через сервер. Данные пользователя берём из ответа сервера,
 // а не из клиента, — сервер проверил подпись.
-export function useAuth(): AuthState {
+export function useAuth(): { auth: AuthState; updateUser: (patch: Partial<AuthUser>) => void } {
   const telegram = useTelegramStatus();
   const raw = useSignal(initData.raw);
   const [state, setState] = useState<AuthState>({ status: "loading" });
@@ -26,22 +28,24 @@ export function useAuth(): AuthState {
     if (telegram !== "ready" || !raw) return;
 
     let cancelled = false;
-    fetch("/api/auth", { method: "POST", headers: { authorization: `tma ${raw}` } })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Не удалось войти через Telegram. Закрой и открой приложение снова.");
-        const data = (await res.json()) as { user: AuthUser };
-        if (!cancelled) setState({ status: "ok", user: data.user });
-      })
-      .catch((err: unknown) => {
-        const message = err instanceof Error ? err.message : "Ошибка сети";
-        if (!cancelled) setState({ status: "error", message });
-      });
+    apiPost<{ user: AuthUser }>("/api/auth").then((result) => {
+      if (cancelled) return;
+      setState(
+        result.ok
+          ? { status: "ok", user: result.data.user }
+          : { status: "error", message: "Не удалось войти через Telegram. Закрой и открой приложение снова." },
+      );
+    });
 
     return () => {
       cancelled = true;
     };
   }, [telegram, raw]);
 
-  if (telegram === "outside") return { status: "outside" };
-  return state;
+  const updateUser = useCallback((patch: Partial<AuthUser>) => {
+    setState((prev) => (prev.status === "ok" ? { ...prev, user: { ...prev.user, ...patch } } : prev));
+  }, []);
+
+  const auth: AuthState = telegram === "outside" ? { status: "outside" } : state;
+  return { auth, updateUser };
 }

@@ -8,6 +8,13 @@
       "when": 1792671388740,
       "tag": "0000_jittery_darwin",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792672155599,
+      "tag": "0001_nappy_vindicator",
+      "breakpoints": true
     }
   ]
 }
