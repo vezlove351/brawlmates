@@ -12,6 +12,10 @@ Telegram Mini App для игроков Brawl Stars. Подробности — 
 | `lib/bot.ts` | Бот на grammY: команда `/start` с кнопкой «Открыть приложение» |
 | `app/api/bot/route.ts` | Вебхук: сюда Telegram присылает сообщения боту |
 | `scripts/set-webhook.mjs` | Одноразовая настройка вебхука и кнопки меню |
+| `lib/telegram-auth.ts` | Проверка подписи initData (вход через Telegram) |
+| `app/api/auth/route.ts` | Вход: проверка initData и создание пользователя |
+| `lib/db/schema.ts` | Таблицы базы данных (Drizzle) |
+| `scripts/check-auth.ts` | Демонстрация: подделанный initData не проходит |
 
 ## Деплой (первый раз)
 
@@ -36,4 +40,18 @@ Telegram Mini App для игроков Brawl Stars. Подробности — 
 npm install
 npm run dev     # http://localhost:3000 — вне Telegram покажет подсказку открыть через бота
 npm run build   # проверка, что всё собирается
+```
+
+## База данных
+
+```bash
+npm run db:generate   # после изменения lib/db/schema.ts — создать миграцию
+npm run db:migrate    # применить миграции к базе
+npm run db:studio     # посмотреть таблицы в браузере
+```
+
+## Проверка входа
+
+```bash
+npm run check-auth -- https://brawlmates.vercel.app
 ```

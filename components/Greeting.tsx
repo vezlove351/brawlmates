@@ -1,17 +1,15 @@
 "use client";
 
-import { initData, useSignal } from "@telegram-apps/sdk-react";
-import { useTelegramStatus } from "./TelegramProvider";
+import { useAuth } from "./useAuth";
 
 export function Greeting() {
-  const status = useTelegramStatus();
-  const user = useSignal(initData.user);
+  const auth = useAuth();
 
-  if (status === "loading") {
+  if (auth.status === "loading") {
     return <p className="text-tg-hint">Загрузка…</p>;
   }
 
-  if (status === "outside") {
+  if (auth.status === "outside") {
     return (
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold">Brawlmates</h1>
@@ -20,7 +18,20 @@ export function Greeting() {
     );
   }
 
+  if (auth.status === "error") {
+    return <p className="text-tg-hint">{auth.message}</p>;
+  }
+
+  const since = new Date(auth.user.createdAt).toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
   return (
-    <h1 className="text-2xl font-bold">Привет, {user?.first_name ?? "игрок"}!</h1>
+    <div className="flex flex-col gap-2">
+      <h1 className="text-2xl font-bold">Привет, {auth.user.firstName}!</h1>
+      <p className="text-tg-hint">В Brawlmates с {since}</p>
+    </div>
   );
 }
