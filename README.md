@@ -55,3 +55,14 @@ npm run db:studio     # посмотреть таблицы в браузере
 ```bash
 npm run check-auth -- https://brawlmates.vercel.app
 ```
+
+## Brawl Stars API и IP-адреса
+
+Ключ API работает только с разрешённых IP. У Vercel IP меняются, поэтому на продакшене
+запросы идут через бесплатный прокси RoyaleAPI со статическим IP:
+
+- `BS_API_BASE_URL` на Vercel (production) = `https://bsproxy.royaleapi.dev/v1`
+- локально (`.env.local`) = `https://api.brawlstars.com/v1`
+- в ключе на developer.brawlstars.com разрешены IP `45.79.218.79` (прокси) и домашний IP
+
+Если дома сменится IP — создай новый ключ с обоими адресами и обнови `BS_API_TOKEN`.
