@@ -25,6 +25,11 @@ export function remoteIconUrl(iconId: number): string {
   return `https://cdn.brawlify.com/profile-icons/regular/${iconId}.png`;
 }
 
+// Иконка бравлера (с CDN Brawlify / BrawlAPI).
+export function brawlerIconUrl(brawlerId: number): string {
+  return `https://cdn.brawlify.com/brawlers/borders/${brawlerId}.png`;
+}
+
 // Ошибка с сообщением, которое можно показать игроку.
 export class BrawlStarsError extends Error {
   constructor(
@@ -105,6 +110,16 @@ interface ApiPlayer {
   "3vs3Victories": number;
   soloVictories: number;
   duoVictories: number;
+  brawlers: PlayerBrawler[];
+}
+
+export interface PlayerBrawler {
+  id: number;
+  name: string;
+  power: number;
+  rank: number;
+  trophies: number;
+  highestTrophies: number;
 }
 
 export interface PlayerProfile {
@@ -118,6 +133,7 @@ export interface PlayerProfile {
   victories3v3: number;
   victoriesSolo: number;
   victoriesDuo: number;
+  brawlers: PlayerBrawler[];
 }
 
 export async function fetchPlayerProfile(tag: string): Promise<PlayerProfile> {
@@ -134,5 +150,14 @@ export async function fetchPlayerProfile(tag: string): Promise<PlayerProfile> {
     victories3v3: p["3vs3Victories"],
     victoriesSolo: p.soloVictories,
     victoriesDuo: p.duoVictories,
+    // Берём только нужные поля — в ответе API их гораздо больше.
+    brawlers: p.brawlers.map((b) => ({
+      id: b.id,
+      name: b.name,
+      power: b.power,
+      rank: b.rank,
+      trophies: b.trophies,
+      highestTrophies: b.highestTrophies,
+    })),
   };
 }

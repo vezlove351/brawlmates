@@ -2,39 +2,8 @@
 
 import { useState } from "react";
 import { iconUrl, remoteIconUrl, type PlayerProfile } from "@/lib/brawlstars";
+import { formatNumber } from "@/lib/format";
 import { StatTile } from "./StatTile";
-import { useProfile } from "./useProfile";
-
-const formatNumber = (n: number) => n.toLocaleString("ru-RU");
-
-export function ProfileSection({ playerTag }: { playerTag: string }) {
-  const state = useProfile(playerTag);
-
-  if (state.status === "loading") {
-    return <div className="h-96 animate-pulse rounded-3xl bg-tg-secondary-bg" />;
-  }
-  if (state.status === "error") {
-    return (
-      <div className="rounded-3xl bg-tg-secondary-bg p-5 text-center text-tg-hint">
-        {state.message}
-      </div>
-    );
-  }
-
-  const { profile, stale, updatedMinutesAgo } = state.data;
-  return (
-    <div className="flex flex-col gap-2">
-      <ProfileCard profile={profile} />
-      <p className="text-center text-xs text-tg-hint">
-        {stale
-          ? "Brawl Stars сейчас недоступен — показаны последние сохранённые данные"
-          : updatedMinutesAgo < 1
-            ? "Данные только что обновлены"
-            : `Данные обновлены ${updatedMinutesAgo} мин назад`}
-      </p>
-    </div>
-  );
-}
 
 // Карточка игрока: яркая и одинаковая в светлой и тёмной теме, чтобы её хотелось показать.
 export function ProfileCard({ profile }: { profile: PlayerProfile }) {

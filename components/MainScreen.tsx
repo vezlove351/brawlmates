@@ -2,7 +2,7 @@
 
 import { Greeting } from "./Greeting";
 import { LinkAccount } from "./LinkAccount";
-import { ProfileSection } from "./ProfileCard";
+import { PlayerView } from "./PlayerView";
 import { useAuth } from "./useAuth";
 
 export function MainScreen() {
@@ -29,7 +29,7 @@ export function MainScreen() {
     <div className="mx-auto flex w-full max-w-md flex-col gap-6 p-4">
       <Greeting firstName={auth.user.firstName} createdAt={auth.user.createdAt} />
       {auth.user.playerTag ? (
-        <ProfileSection playerTag={auth.user.playerTag} />
+        <PlayerView playerTag={auth.user.playerTag} />
       ) : (
         <LinkAccount onLinked={(playerTag) => updateUser({ playerTag })} />
       )}

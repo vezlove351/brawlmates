@@ -18,7 +18,9 @@ export async function getPlayerProfile(tag: string): Promise<CachedProfile> {
   const db = getDb();
   const [cached] = await db.select().from(playerProfiles).where(eq(playerProfiles.tag, tag));
 
-  if (cached && Date.now() - cached.fetchedAt.getTime() < CACHE_TTL_MS) {
+  // В старых записях кеша нет списка бравлеров — такие считаем устаревшими.
+  const complete = cached && Array.isArray(cached.data.brawlers);
+  if (cached && complete && Date.now() - cached.fetchedAt.getTime() < CACHE_TTL_MS) {
     return { profile: cached.data, fetchedAt: cached.fetchedAt, stale: false };
   }
 
@@ -32,7 +34,7 @@ export async function getPlayerProfile(tag: string): Promise<CachedProfile> {
     return { profile, fetchedAt, stale: false };
   } catch (err) {
     // API лёг (техработы, лимит) — лучше показать старые данные, чем ошибку.
-    if (cached && err instanceof BrawlStarsError && err.status !== 404) {
+    if (cached && complete && err instanceof BrawlStarsError && err.status !== 404) {
       return { profile: cached.data, fetchedAt: cached.fetchedAt, stale: true };
     }
     throw err;
