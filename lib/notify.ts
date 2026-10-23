@@ -1,7 +1,10 @@
+import { eq } from "drizzle-orm";
 import { getBot } from "./bot";
+import { getDb } from "./db";
+import { users } from "./db/schema";
 import { formatNumber } from "./format";
 import { findMode } from "./lfg";
-import { profileLink } from "./links";
+import { FRIENDS_APP_LINK, profileLink } from "./links";
 import { getPlayerProfile } from "./profile";
 import { getAllowedContact } from "./settings-server";
 
@@ -37,6 +40,29 @@ export async function notifyAuthorAboutResponse(notice: ResponseNotice) {
   await getBot().api.sendMessage(notice.authorId, lines.join("\n"), {
     reply_markup: {
       inline_keyboard: [[{ text: "Открыть профиль", url: profileLink(profile.tag) }]],
+    },
+  });
+}
+
+// Ник и трофеи игрока для текста уведомлений.
+async function playerLine(userId: number): Promise<string | null> {
+  const [user] = await getDb().select({ tag: users.playerTag }).from(users).where(eq(users.id, userId));
+  if (!user?.tag) return null;
+  const { profile } = await getPlayerProfile(user.tag);
+  return `${profile.name} (🏆 ${formatNumber(profile.trophies)})`;
+}
+
+// «Тебя хотят добавить в друзья» / «Твою заявку приняли».
+export async function notifyFriend(targetId: number, fromId: number, kind: "request" | "accepted") {
+  const who = await playerLine(fromId);
+  if (!who) return;
+  const text =
+    kind === "request"
+      ? `👋 ${who} хочет добавить тебя в друзья в Brawlmates.`
+      : `✅ ${who} теперь твой друг в Brawlmates!`;
+  await getBot().api.sendMessage(targetId, text, {
+    reply_markup: {
+      inline_keyboard: [[{ text: kind === "request" ? "Открыть заявки" : "Открыть друзей", url: FRIENDS_APP_LINK }]],
     },
   });
 }

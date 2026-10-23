@@ -38,6 +38,7 @@ export async function getSettings(userId: number) {
   return {
     isAdmin: isAdmin(userId),
     showTelegramContact: privacy?.showTelegramContact ?? false,
+    acceptFriendRequests: privacy?.acceptFriendRequests ?? true,
     hiddenPlayers: hidden
       .filter((h): h is typeof h & { tag: string } => h.tag !== null)
       .map((h) => ({ tag: h.tag, name: h.profile?.name ?? h.tag })),
@@ -53,6 +54,17 @@ export async function setShowContact(userId: number, show: boolean, username: st
     .onConflictDoUpdate({
       target: privacySettings.userId,
       set: { showTelegramContact: show, telegramUsername, updatedAt: new Date() },
+    });
+}
+
+// Принимать ли заявки в друзья.
+export async function setAcceptFriendRequests(userId: number, accept: boolean) {
+  await getDb()
+    .insert(privacySettings)
+    .values({ userId, acceptFriendRequests: accept })
+    .onConflictDoUpdate({
+      target: privacySettings.userId,
+      set: { acceptFriendRequests: accept, updatedAt: new Date() },
     });
 }
 

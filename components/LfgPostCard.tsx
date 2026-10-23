@@ -8,7 +8,14 @@ import { BrawlerIcon } from "./BrawlerIcon";
 import { formatTimeLeft, useNow } from "./useNow";
 
 // Карточка заявки «ищу тиммейта». Кнопки действий передаются снаружи (children).
-export function LfgPostCard({ post, children }: { post: PublicLfgPost; children?: ReactNode }) {
+interface LfgPostCardProps {
+  post: PublicLfgPost;
+  children?: ReactNode;
+  // Если задано — ник автора кликабельный и открывает его профиль.
+  onOpenProfile?: (tag: string) => void;
+}
+
+export function LfgPostCard({ post, children, onOpenProfile }: LfgPostCardProps) {
   const now = useNow();
   const mode = findMode(post.mode);
   const language = findLanguage(post.language);
@@ -18,7 +25,13 @@ export function LfgPostCard({ post, children }: { post: PublicLfgPost; children?
     <article className="flex flex-col gap-3 rounded-2xl bg-tg-secondary-bg p-4">
       <header className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="truncate font-bold">{post.playerName}</p>
+          {onOpenProfile ? (
+            <button onClick={() => onOpenProfile(post.playerTag)} className="block max-w-full truncate font-bold text-tg-link">
+              {post.playerName} ›
+            </button>
+          ) : (
+            <p className="truncate font-bold">{post.playerName}</p>
+          )}
           <p className="text-sm text-tg-hint">🏆 {formatNumber(post.authorTrophies)}</p>
         </div>
         <span className="shrink-0 rounded-full bg-tg-bg px-2 py-1 text-xs font-semibold text-tg-hint">

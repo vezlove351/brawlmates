@@ -9,6 +9,7 @@ import { Button } from "./Button";
 interface Settings {
   isAdmin: boolean;
   showTelegramContact: boolean;
+  acceptFriendRequests: boolean;
   hiddenPlayers: { tag: string; name: string }[];
 }
 
@@ -40,6 +41,17 @@ export function SettingsScreen() {
     });
     setBusy(false);
     if (result.ok) setSettings((s) => (s ? { ...s, showTelegramContact: result.data.showTelegramContact } : s));
+    else setError(result.error);
+  }
+
+  async function toggleFriendRequests(accept: boolean) {
+    setBusy(true);
+    setError(null);
+    const result = await apiPost<{ acceptFriendRequests: boolean }>("/api/settings/update", {
+      acceptFriendRequests: accept,
+    });
+    setBusy(false);
+    if (result.ok) setSettings((s) => (s ? { ...s, acceptFriendRequests: result.data.acceptFriendRequests } : s));
     else setError(result.error);
   }
 
@@ -103,6 +115,25 @@ export function SettingsScreen() {
             checked={settings.showTelegramContact}
             disabled={busy}
             onChange={(e) => toggleContact(e.target.checked)}
+          />
+        </label>
+      </Card>
+
+      <Card>
+        <label className="flex items-start justify-between gap-4">
+          <span>
+            <span className="block font-semibold">Принимать заявки в друзья</span>
+            <span className="block text-sm text-tg-hint">
+              Если выключено — никто не сможет отправить тебе заявку. Уже добавленные друзья
+              останутся.
+            </span>
+          </span>
+          <input
+            type="checkbox"
+            className="mt-1 h-6 w-6 shrink-0 accent-(--color-tg-button)"
+            checked={settings.acceptFriendRequests}
+            disabled={busy}
+            onChange={(e) => toggleFriendRequests(e.target.checked)}
           />
         </label>
       </Card>

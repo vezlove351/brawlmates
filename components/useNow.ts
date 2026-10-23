@@ -44,3 +44,14 @@ export function formatTimeLeft(ms: number | null): string {
   const m = minutes % 60;
   return h > 0 ? `${h} ч ${m} мин` : `${m} мин`;
 }
+
+// "5 мин назад", "3 ч назад", "2 дн. назад"
+export function formatAgo(ms: number | null): string {
+  if (ms === null) return "…";
+  const minutes = Math.max(0, Math.floor(ms / 60_000));
+  if (minutes < 1) return "только что";
+  if (minutes < 60) return `${minutes} мин назад`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} ч назад`;
+  return `${Math.floor(hours / 24)} дн. назад`;
+}

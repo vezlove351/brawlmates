@@ -16,7 +16,13 @@ interface MyLfgState {
 }
 
 // Раздел «Тиммейты»: моя заявка сверху, затем лента чужих заявок с фильтрами.
-export function LfgScreen({ playerTag }: { playerTag: string }) {
+export function LfgScreen({
+  playerTag,
+  onOpenProfile,
+}: {
+  playerTag: string;
+  onOpenProfile: (tag: string) => void;
+}) {
   const profile = useProfile(playerTag, "own");
   const [mine, setMine] = useState<MyLfgState | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -113,7 +119,7 @@ export function LfgScreen({ playerTag }: { playerTag: string }) {
           </Note>
         ) : (
           feed.posts.map((post) => (
-            <LfgPostCard key={post.id} post={post}>
+            <LfgPostCard key={post.id} post={post} onOpenProfile={onOpenProfile}>
               <FeedPostActions post={post} onHidden={() => removeAuthor(post.playerTag)} />
             </LfgPostCard>
           ))

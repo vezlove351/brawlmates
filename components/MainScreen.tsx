@@ -4,6 +4,7 @@ import { useState } from "react";
 import { initData, useSignal } from "@telegram-apps/sdk-react";
 import { parseProfileStartParam } from "@/lib/links";
 import { BottomNav, type Section } from "./BottomNav";
+import { FriendsScreen } from "./FriendsScreen";
 import { Greeting } from "./Greeting";
 import { LfgScreen } from "./LfgScreen";
 import { LinkAccount } from "./LinkAccount";
@@ -18,9 +19,16 @@ export function MainScreen() {
   const startParam = useSignal(initData.startParam);
   const sharedTag = parseProfileStartParam(startParam);
   const [showOwn, setShowOwn] = useState(false);
-  const [chosenSection, setSection] = useState<Section | null>(null);
-  // Ссылка из канала (startapp=lfg) сразу открывает «Тиммейты».
-  const section: Section = chosenSection ?? (startParam === "lfg" ? "lfg" : "profile");
+  const [chosenSection, setChosenSection] = useState<Section | null>(null);
+  // Ссылки startapp=lfg (из канала) и startapp=friends (из уведомления) открывают нужный раздел.
+  const section: Section =
+    chosenSection ?? (startParam === "lfg" ? "lfg" : startParam === "friends" ? "friends" : "profile");
+  // Профиль другого игрока, открытый внутри приложения (из друзей или ленты).
+  const [viewingTag, setViewingTag] = useState<string | null>(null);
+  const setSection = (s: Section) => {
+    setViewingTag(null);
+    setChosenSection(s);
+  };
 
   if (auth.status === "loading") {
     return <Centered><p className="text-tg-hint">Загрузка…</p></Centered>;
@@ -62,13 +70,17 @@ export function MainScreen() {
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-6 p-4">
-      {section === "profile" ? (
+      {viewingTag ? (
+        <PublicProfile playerTag={viewingTag} onOpenOwn={() => setViewingTag(null)} backLabel="← Назад" />
+      ) : section === "profile" ? (
         <>
           <Greeting firstName={auth.user.firstName} createdAt={auth.user.createdAt} />
           <PlayerView playerTag={playerTag} />
         </>
       ) : section === "lfg" ? (
-        <LfgScreen playerTag={playerTag} />
+        <LfgScreen playerTag={playerTag} onOpenProfile={setViewingTag} />
+      ) : section === "friends" ? (
+        <FriendsScreen onOpenProfile={setViewingTag} />
       ) : (
         <SettingsScreen />
       )}

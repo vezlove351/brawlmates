@@ -1,15 +1,18 @@
 "use client";
 
 import { Button } from "./Button";
+import { FriendButton } from "./FriendButton";
 import { PlayerView } from "./PlayerView";
 
 interface PublicProfileProps {
   playerTag: string;
   onOpenOwn: () => void;
+  // Подпись кнопки возврата: по ссылке — «Мой профиль →», внутри приложения — «← Назад».
+  backLabel?: string;
 }
 
 // Чужой профиль, открытый по ссылке. Только просмотр.
-export function PublicProfile({ playerTag, onOpenOwn }: PublicProfileProps) {
+export function PublicProfile({ playerTag, onOpenOwn, backLabel = "Мой профиль →" }: PublicProfileProps) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
@@ -18,9 +21,11 @@ export function PublicProfile({ playerTag, onOpenOwn }: PublicProfileProps) {
           <h1 className="text-xl font-bold">{playerTag}</h1>
         </div>
         <button onClick={onOpenOwn} className="shrink-0 text-sm font-semibold text-tg-link">
-          Мой профиль →
+          {backLabel}
         </button>
       </div>
+
+      <FriendButton playerTag={playerTag} />
 
       <PlayerView
         playerTag={playerTag}

@@ -10,6 +10,9 @@ export const LFG_CHANNEL = "@brawlmate_app";
 // Ссылка, открывающая раздел «Тиммейты».
 export const LFG_APP_LINK = `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}?startapp=lfg`;
 
+// Ссылка, открывающая раздел «Друзья».
+export const FRIENDS_APP_LINK = `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}?startapp=friends`;
+
 // Ссылка, открывающая профиль игрока: t.me/Brawlmates_bot/app?startapp=p_ABC123
 export function profileLink(tag: string): string {
   return `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}?startapp=p_${tag.replace(/^#/, "")}`;
