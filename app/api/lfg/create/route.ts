@@ -1,5 +1,6 @@
 import { authenticate } from "@/lib/auth";
 import { BrawlStarsError } from "@/lib/brawlstars";
+import { schedulePublish } from "@/lib/channel";
 import type { LfgPostInput } from "@/lib/lfg";
 import { createPost, LfgError, toPublicPost } from "@/lib/lfg-server";
 
@@ -20,6 +21,8 @@ export async function POST(request: Request): Promise<Response> {
       playersNeeded: Number(body.playersNeeded),
       comment: typeof body.comment === "string" ? body.comment : "",
     });
+    // Публикуем заявку в канале @brawlmate_app (уже после ответа).
+    schedulePublish(post.id);
     return Response.json({ post: toPublicPost(post) });
   } catch (err) {
     if (err instanceof LfgError || err instanceof BrawlStarsError) {

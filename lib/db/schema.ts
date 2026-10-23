@@ -118,6 +118,8 @@ export const lfgPosts = pgTable(
     status: text("status").$type<LfgStatus>().notNull().default("active"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    // Номер поста в канале @brawlmate_app — чтобы удалить пост, когда заявка неактивна.
+    channelMessageId: integer("channel_message_id"),
   },
   (t) => [
     // База сама не даст создать вторую активную заявку.

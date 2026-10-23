@@ -1,4 +1,5 @@
 import { and, count, desc, eq, gt, gte, inArray, isNull, lt, ne, notExists, sql } from "drizzle-orm";
+import { scheduleRemoval } from "./channel";
 import { getDb } from "./db";
 import {
   hiddenUsers,
@@ -36,12 +37,14 @@ export class LfgError extends Error {
 // Заявки, у которых прошло 2 часа, помечаем истёкшими.
 // Крон делает это для всех (задача 8), а здесь — для одного автора, чтобы не ждать крона.
 async function expireOwnPosts(authorId: number) {
-  await getDb()
+  const expired = await getDb()
     .update(lfgPosts)
     .set({ status: "expired" })
     .where(
       and(eq(lfgPosts.authorId, authorId), eq(lfgPosts.status, "active"), lt(lfgPosts.expiresAt, new Date())),
-    );
+    )
+    .returning({ id: lfgPosts.id });
+  scheduleRemoval(expired.map((p) => p.id));
 }
 
 export async function getActivePost(authorId: number) {
@@ -241,6 +244,7 @@ export async function closePost(userId: number, postId: number) {
     .where(and(eq(lfgPosts.id, postId), eq(lfgPosts.authorId, userId), eq(lfgPosts.status, "active")))
     .returning({ id: lfgPosts.id });
   if (closed.length === 0) throw new LfgError("Эту заявку нельзя закрыть: она уже неактивна или не твоя", 404);
+  scheduleRemoval([postId]);
 }
 
 // Заявка, с которой можно взаимодействовать (активная, не своя, автор не заблокирован).
@@ -314,6 +318,8 @@ export async function reportPost(userId: number, postId: number, reason: ReportR
       .update(lfgPosts)
       .set({ status: "hidden" })
       .where(and(eq(lfgPosts.id, post.id), eq(lfgPosts.status, "active")));
+    // Скрыта до проверки — убираем и из канала.
+    scheduleRemoval([post.id]);
   }
 }
 

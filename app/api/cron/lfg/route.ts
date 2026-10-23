@@ -1,4 +1,5 @@
 import { and, eq, lt } from "drizzle-orm";
+import { removePostsFromChannel } from "@/lib/channel";
 import { isFromVercelCron } from "@/lib/cron";
 import { getDb } from "@/lib/db";
 import { lfgPosts, tagLinkRequests } from "@/lib/db/schema";
@@ -16,6 +17,7 @@ export async function GET(request: Request): Promise<Response> {
     .set({ status: "expired" })
     .where(and(eq(lfgPosts.status, "active"), lt(lfgPosts.expiresAt, now)))
     .returning({ id: lfgPosts.id });
+  await removePostsFromChannel(expired.map((p) => p.id));
 
   // Заодно удаляем просроченные запросы на привязку тега.
   const staleLinks = await db

@@ -1,5 +1,6 @@
-import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { authenticate } from "./auth";
+import { schedulePublish, scheduleRemoval } from "./channel";
 import { getDb } from "./db";
 import { lfgPosts, lfgReports, users, type ReportResolution } from "./db/schema";
 
@@ -66,6 +67,7 @@ export async function resolveReports(postId: number, action: AdminAction) {
   if (action === "keep") {
     // Заявка в порядке: если её скрыли жалобы и она ещё не истекла — возвращаем в ленту.
     const restore = post.status === "hidden" && post.expiresAt > new Date();
+    if (restore) schedulePublish(postId); // вернулась в ленту — снова в канал
     await db.batch([
       markReports,
       db
@@ -77,12 +79,18 @@ export async function resolveReports(postId: number, action: AdminAction) {
   }
 
   if (action === "remove") {
+    scheduleRemoval([postId]);
     await db.batch([markReports, db.update(lfgPosts).set({ status: "removed" }).where(eq(lfgPosts.id, postId))]);
     return;
   }
 
   // Блокировка: автор больше не может создавать заявки и откликаться,
-  // все его активные и скрытые заявки снимаются.
+  // все его активные и скрытые заявки снимаются (и из канала тоже).
+  const authorPosts = await db
+    .select({ id: lfgPosts.id })
+    .from(lfgPosts)
+    .where(and(eq(lfgPosts.authorId, post.authorId), isNotNull(lfgPosts.channelMessageId)));
+  scheduleRemoval([postId, ...authorPosts.map((p) => p.id)]);
   await db.batch([
     markReports,
     db.update(users).set({ bannedAt: new Date() }).where(eq(users.id, post.authorId)),

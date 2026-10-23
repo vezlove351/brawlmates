@@ -15,9 +15,12 @@ import { useAuth } from "./useAuth";
 export function MainScreen() {
   const { auth, updateUser } = useAuth();
   // Если приложение открыли по ссылке на чужой профиль (startapp=p_ТЕГ).
-  const sharedTag = parseProfileStartParam(useSignal(initData.startParam));
+  const startParam = useSignal(initData.startParam);
+  const sharedTag = parseProfileStartParam(startParam);
   const [showOwn, setShowOwn] = useState(false);
-  const [section, setSection] = useState<Section>("profile");
+  const [chosenSection, setSection] = useState<Section | null>(null);
+  // Ссылка из канала (startapp=lfg) сразу открывает «Тиммейты».
+  const section: Section = chosenSection ?? (startParam === "lfg" ? "lfg" : "profile");
 
   if (auth.status === "loading") {
     return <Centered><p className="text-tg-hint">Загрузка…</p></Centered>;

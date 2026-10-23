@@ -1,0 +1,1 @@
+ALTER TABLE "lfg_posts" ADD COLUMN "channel_message_id" integer;

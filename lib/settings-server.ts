@@ -1,9 +1,12 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
+import { after } from "next/server";
 import { isAdmin } from "./admin";
+import { deleteChannelMessages } from "./channel";
 import { getDb } from "./db";
 import {
   battles,
   hiddenUsers,
+  lfgPosts,
   playerProfiles,
   privacySettings,
   trophyHistory,
@@ -78,6 +81,14 @@ export async function deleteAccount(userId: number) {
   const db = getDb();
   const [user] = await db.select({ tag: users.playerTag }).from(users).where(eq(users.id, userId));
   if (!user) return;
+
+  // Посты заявок в канале удаляем отдельно: после удаления строк номеров уже не будет.
+  const channelPosts = await db
+    .select({ messageId: lfgPosts.channelMessageId })
+    .from(lfgPosts)
+    .where(and(eq(lfgPosts.authorId, userId), isNotNull(lfgPosts.channelMessageId)));
+  const messageIds = channelPosts.map((p) => p.messageId!);
+  if (messageIds.length > 0) after(() => deleteChannelMessages(messageIds));
 
   const tag = user.tag;
   if (tag) {
