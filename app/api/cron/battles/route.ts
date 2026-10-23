@@ -1,20 +1,11 @@
-import { timingSafeEqual } from "node:crypto";
 import { isNotNull } from "drizzle-orm";
 import { syncPlayer } from "@/lib/battles";
+import { isFromVercelCron } from "@/lib/cron";
 import { getDb } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 
 // Крону даём до 5 минут: игроков может быть много.
 export const maxDuration = 300;
-
-// Vercel присылает "Authorization: Bearer <CRON_SECRET>" — так мы знаем, что это наш крон.
-function isFromVercelCron(request: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  const received = Buffer.from(request.headers.get("authorization") ?? "");
-  const expected = Buffer.from(`Bearer ${secret}`);
-  return received.length === expected.length && timingSafeEqual(received, expected);
-}
 
 // Каждые 30 минут (см. vercel.json): сохраняем новые бои всех привязанных игроков.
 export async function GET(request: Request): Promise<Response> {

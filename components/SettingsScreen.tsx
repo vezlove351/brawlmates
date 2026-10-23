@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { miniApp } from "@telegram-apps/sdk-react";
 import { apiPost } from "@/lib/api-client";
 import { Button } from "./Button";
 
 interface Settings {
+  isAdmin: boolean;
   showTelegramContact: boolean;
   hiddenPlayers: { tag: string; name: string }[];
 }
@@ -76,6 +78,15 @@ export function SettingsScreen() {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-bold">Настройки</h1>
+
+      {settings.isAdmin && (
+        <Link
+          href="/admin"
+          className="rounded-2xl bg-tg-secondary-bg p-4 text-center font-semibold text-tg-link"
+        >
+          🛡️ Модерация — жалобы
+        </Link>
+      )}
 
       <Card>
         <label className="flex items-start justify-between gap-4">

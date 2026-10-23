@@ -1,4 +1,5 @@
 import { and, eq } from "drizzle-orm";
+import { isAdmin } from "./admin";
 import { getDb } from "./db";
 import {
   battles,
@@ -32,6 +33,7 @@ export async function getSettings(userId: number) {
     .where(eq(hiddenUsers.userId, userId));
 
   return {
+    isAdmin: isAdmin(userId),
     showTelegramContact: privacy?.showTelegramContact ?? false,
     hiddenPlayers: hidden
       .filter((h): h is typeof h & { tag: string } => h.tag !== null)
