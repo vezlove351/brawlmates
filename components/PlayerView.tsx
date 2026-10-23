@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { BattlesTab } from "./BattlesTab";
 import { BrawlerList } from "./BrawlerList";
 import { ProfileCard } from "./ProfileCard";
+import { ShareButton } from "./ShareButton";
 import { Tabs } from "./Tabs";
 import { useProfile, type ProfileState } from "./useProfile";
 
@@ -38,12 +39,16 @@ export function PlayerView({ playerTag, readonly = false, renderNotFound }: Play
   return (
     <div className="flex flex-col gap-4">
       <Tabs options={readonly ? PUBLIC_TABS : OWN_TABS} value={tab} onChange={setTab} />
-      {tab === "battles" && !readonly ? <BattlesTab /> : <ProfileTabs tab={tab} state={state} />}
+      {tab === "battles" && !readonly ? (
+        <BattlesTab />
+      ) : (
+        <ProfileTabs tab={tab} state={state} readonly={readonly} />
+      )}
     </div>
   );
 }
 
-function ProfileTabs({ tab, state }: { tab: Tab; state: ProfileState }) {
+function ProfileTabs({ tab, state, readonly }: { tab: Tab; state: ProfileState; readonly: boolean }) {
   if (state.status === "loading") {
     return <div className="h-96 animate-pulse rounded-3xl bg-tg-secondary-bg" />;
   }
@@ -61,7 +66,11 @@ function ProfileTabs({ tab, state }: { tab: Tab; state: ProfileState }) {
       {tab === "brawlers" ? (
         <BrawlerList brawlers={profile.brawlers} />
       ) : (
-        <ProfileCard profile={profile} />
+        <>
+          <ProfileCard profile={profile} />
+          {/* Делиться можно только своим профилем */}
+          {!readonly && <ShareButton playerTag={profile.tag} />}
+        </>
       )}
       <p className="text-center text-xs text-tg-hint">
         {stale

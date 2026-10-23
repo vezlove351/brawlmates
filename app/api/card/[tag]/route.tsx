@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { eq } from "drizzle-orm";
 import { ImageResponse } from "next/og";
+import sharp from "sharp";
 import { ProfileOgCard, type OgImages } from "@/components/og/ProfileOgCard";
 import {
   BrawlStarsError,
@@ -15,6 +16,7 @@ import { users } from "@/lib/db/schema";
 import { getPlayerProfile } from "@/lib/profile";
 
 // Картинка-карточка профиля для превью: /api/card/ABC123 (тег без #).
+// /api/card/ABC123?format=jpg — то же в JPEG (Telegram требует JPEG для фото в сообщениях бота).
 // ImageResponse — это и есть @vercel/og, встроенный в Next.js.
 
 // Кеш на 10 минут: и в Telegram, и на CDN Vercel.
@@ -50,7 +52,7 @@ async function toDataUrl(url: string): Promise<string | null> {
   }
 }
 
-export async function GET(_request: Request, ctx: RouteContext<"/api/card/[tag]">) {
+export async function GET(request: Request, ctx: RouteContext<"/api/card/[tag]">) {
   const { tag: rawTag } = await ctx.params;
   const tag = normalizeTag(decodeURIComponent(rawTag).replace(/\.png$/i, ""));
   if (!isValidTag(tag)) return new Response("Bad tag", { status: 400 });
@@ -79,8 +81,14 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/card/[tag]"
     brawlers: Object.fromEntries(topBrawlers.map((b, i) => [b.id, brawlerIcons[i]])),
   };
 
-  return new ImageResponse(
+  const png = new ImageResponse(
     <ProfileOgCard profile={profile} topBrawlers={topBrawlers} images={images} />,
     { width: 1200, height: 630, fonts, emoji: "twemoji", headers: CACHE_HEADERS },
   );
+  if (new URL(request.url).searchParams.get("format") !== "jpg") return png;
+
+  const jpeg = await sharp(Buffer.from(await png.arrayBuffer())).jpeg({ quality: 88 }).toBuffer();
+  return new Response(new Uint8Array(jpeg), {
+    headers: { ...CACHE_HEADERS, "content-type": "image/jpeg" },
+  });
 }
