@@ -26,6 +26,8 @@ export const users = pgTable("users", {
   playerTag: text("player_tag").unique(),
   // Заблокирован модератором: не может создавать заявки и откликаться.
   bannedAt: timestamp("banned_at", { withTimezone: true }),
+  // Часовой пояс телефона (например, "Europe/Lisbon") — чтобы писать время игр по-местному.
+  timeZone: text("time_zone"),
 });
 
 // Незавершённая привязка тега: какую иконку мы попросили поставить.
@@ -243,6 +245,99 @@ export const friendships = pgTable(
     index("friendships_addressee_idx").on(t.addresseeId, t.status),
     index("friendships_requester_created_idx").on(t.requesterId, t.createdAt),
   ],
+);
+
+// ===================== Этап 3: команды =====================
+
+// Команда до 3 игроков. Эмблема — ключ из готового набора (lib/teams.ts).
+export const teams = pgTable("teams", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  emblem: text("emblem").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type TeamRole = "captain" | "member";
+
+// Участники команды. user_id — первичный ключ: игрок состоит максимум в одной команде.
+export const teamMembers = pgTable(
+  "team_members",
+  {
+    userId: bigint("user_id", { mode: "number" })
+      .primaryKey()
+      .references(() => users.id, { onDelete: "cascade" }),
+    teamId: integer("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    role: text("role").$type<TeamRole>().notNull().default("member"),
+    joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("team_members_team_idx").on(t.teamId),
+    // В команде ровно один капитан.
+    uniqueIndex("team_members_one_captain_idx").on(t.teamId).where(sql`${t.role} = 'captain'`),
+  ],
+);
+
+// Одноразовые приглашения. invitedUserId задан — приглашение конкретному другу;
+// пусто — ссылка для любого. Живут 24 часа, срабатывают один раз.
+export const teamInvites = pgTable(
+  "team_invites",
+  {
+    id: serial("id").primaryKey(),
+    teamId: integer("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    // Случайный код для ссылки t.me/...?startapp=team_<код>
+    code: text("code").notNull().unique(),
+    createdBy: bigint("created_by", { mode: "number" })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    invitedUserId: bigint("invited_user_id", { mode: "number" }).references(() => users.id, {
+      onDelete: "cascade",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedBy: bigint("used_by", { mode: "number" }).references(() => users.id, { onDelete: "set null" }),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+  },
+  (t) => [index("team_invites_invited_idx").on(t.invitedUserId)],
+);
+
+// Запланированные игры команды. Время — в UTC; каждому показываем в его часовом поясе.
+export const teamGames = pgTable(
+  "team_games",
+  {
+    id: serial("id").primaryKey(),
+    teamId: integer("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    createdBy: bigint("created_by", { mode: "number" }).references(() => users.id, { onDelete: "set null" }),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+    // Когда отправили напоминание за 15 минут (чтобы не отправить дважды).
+    reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("team_games_starts_idx").on(t.startsAt)],
+);
+
+export type GameAnswer = "yes" | "no";
+
+// Ответы «Буду» / «Не смогу». Один ответ от участника на игру (можно передумать).
+export const teamGameResponses = pgTable(
+  "team_game_responses",
+  {
+    gameId: integer("game_id")
+      .notNull()
+      .references(() => teamGames.id, { onDelete: "cascade" }),
+    userId: bigint("user_id", { mode: "number" })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    answer: text("answer").$type<GameAnswer>().notNull(),
+    answeredAt: timestamp("answered_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.gameId, t.userId] })],
 );
 
 export type User = typeof users.$inferSelect;
