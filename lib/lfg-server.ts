@@ -5,6 +5,7 @@ import {
   lfgPosts,
   lfgReports,
   lfgResponses,
+  privacySettings,
   users,
   type ReportReason,
 } from "./db/schema";
@@ -212,14 +213,22 @@ export async function getFeed(viewerId: number, filters: FeedFilters) {
       // Откликался ли я уже на эту заявку
       responded: sql<boolean>`exists (select 1 from ${lfgResponses} where ${lfgResponses.postId} = ${lfgPosts.id} and ${lfgResponses.responderId} = ${viewerId})`,
       reported: sql<boolean>`exists (select 1 from ${lfgReports} where ${lfgReports.postId} = ${lfgPosts.id} and ${lfgReports.reporterId} = ${viewerId})`,
+      // Telegram автора — только если он сам включил показ в настройках.
+      authorContact: sql<string | null>`case when ${privacySettings.showTelegramContact} then ${privacySettings.telegramUsername} end`,
     })
     .from(lfgPosts)
     .innerJoin(users, eq(users.id, lfgPosts.authorId))
+    .leftJoin(privacySettings, eq(privacySettings.userId, lfgPosts.authorId))
     .where(and(...conditions))
     .orderBy(desc(lfgPosts.createdAt))
     .limit(50);
 
-  return rows.map((r) => ({ ...toPublicPost(r.post), responded: r.responded, reported: r.reported }));
+  return rows.map((r) => ({
+    ...toPublicPost(r.post),
+    responded: r.responded,
+    reported: r.reported,
+    authorContact: r.authorContact,
+  }));
 }
 
 export type FeedPost = Awaited<ReturnType<typeof getFeed>>[number];

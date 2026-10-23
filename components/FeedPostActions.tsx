@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { openTelegramLink } from "@telegram-apps/sdk-react";
 import { apiPost } from "@/lib/api-client";
 import type { FeedPost } from "@/lib/lfg-server";
 import { Button } from "./Button";
@@ -48,6 +49,15 @@ export function FeedPostActions({ post, onHidden }: FeedPostActionsProps) {
 
   return (
     <div className="flex flex-col gap-2">
+      {/* Telegram автора — только если он сам разрешил это в настройках */}
+      {post.authorContact && (
+        <button
+          onClick={() => openTelegramLink.ifAvailable(`https://t.me/${post.authorContact}`)}
+          className="self-start text-sm font-semibold text-tg-link"
+        >
+          ✈️ Telegram: @{post.authorContact}
+        </button>
+      )}
       <div className="grid grid-cols-[auto_1fr] gap-2">
         <Button variant="secondary" className="bg-tg-bg! whitespace-nowrap px-3 py-2 text-sm" onClick={copyTag}>
           📋 Скопировать тег

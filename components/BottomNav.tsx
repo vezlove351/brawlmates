@@ -2,11 +2,12 @@
 
 import { useEffect } from "react";
 
-export type Section = "profile" | "lfg";
+export type Section = "profile" | "lfg" | "settings";
 
 const ITEMS: { value: Section; label: string; emoji: string }[] = [
   { value: "profile", label: "Профиль", emoji: "👤" },
   { value: "lfg", label: "Тиммейты", emoji: "🤝" },
+  { value: "settings", label: "Настройки", emoji: "⚙️" },
 ];
 
 // Нижняя панель разделов, как в обычных приложениях.

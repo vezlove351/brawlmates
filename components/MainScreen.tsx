@@ -9,6 +9,7 @@ import { LfgScreen } from "./LfgScreen";
 import { LinkAccount } from "./LinkAccount";
 import { PlayerView } from "./PlayerView";
 import { PublicProfile } from "./PublicProfile";
+import { SettingsScreen } from "./SettingsScreen";
 import { useAuth } from "./useAuth";
 
 export function MainScreen() {
@@ -63,8 +64,10 @@ export function MainScreen() {
           <Greeting firstName={auth.user.firstName} createdAt={auth.user.createdAt} />
           <PlayerView playerTag={playerTag} />
         </>
-      ) : (
+      ) : section === "lfg" ? (
         <LfgScreen playerTag={playerTag} />
+      ) : (
+        <SettingsScreen />
       )}
       <BottomNav value={section} onChange={setSection} />
     </div>
