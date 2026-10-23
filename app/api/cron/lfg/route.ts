@@ -3,6 +3,7 @@ import { removePostsFromChannel } from "@/lib/channel";
 import { isFromVercelCron } from "@/lib/cron";
 import { getDb } from "@/lib/db";
 import { lfgPosts, tagLinkRequests } from "@/lib/db/schema";
+import { cleanupExpiredInvites } from "@/lib/teams";
 
 // Каждые 15 минут (см. vercel.json): уборка LFG.
 export async function GET(request: Request): Promise<Response> {
@@ -25,7 +26,10 @@ export async function GET(request: Request): Promise<Response> {
     .where(lt(tagLinkRequests.expiresAt, now))
     .returning({ userId: tagLinkRequests.userId });
 
-  const summary = { expiredPosts: expired.length, staleLinkRequests: staleLinks.length };
+  // И просроченные приглашения в команды.
+  const staleInvites = await cleanupExpiredInvites();
+
+  const summary = { expiredPosts: expired.length, staleLinkRequests: staleLinks.length, staleInvites };
   console.log("Крон LFG:", summary);
   return Response.json(summary);
 }

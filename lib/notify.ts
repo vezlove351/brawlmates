@@ -7,6 +7,7 @@ import { findMode } from "./lfg";
 import { FRIENDS_APP_LINK, profileLink } from "./links";
 import { getPlayerProfile } from "./profile";
 import { getAllowedContact } from "./settings-server";
+import { teamInviteLink } from "./teams";
 
 interface ResponseNotice {
   authorId: number;
@@ -65,4 +66,21 @@ export async function notifyFriend(targetId: number, fromId: number, kind: "requ
       inline_keyboard: [[{ text: kind === "request" ? "Открыть заявки" : "Открыть друзей", url: FRIENDS_APP_LINK }]],
     },
   });
+}
+
+// Приглашение в команду от друга.
+export async function notifyTeamInvite(
+  targetId: number,
+  fromId: number,
+  invite: { code: string; teamName: string; emblem: string },
+) {
+  const who = await playerLine(fromId);
+  if (!who) return;
+  await getBot().api.sendMessage(
+    targetId,
+    `${invite.emblem} ${who} зовёт тебя в команду «${invite.teamName}» в Brawlmates.
+
+Приглашение действует 24 часа.`,
+    { reply_markup: { inline_keyboard: [[{ text: "Посмотреть приглашение", url: teamInviteLink(invite.code) }]] } },
+  );
 }

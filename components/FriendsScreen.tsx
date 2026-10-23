@@ -52,7 +52,6 @@ export function FriendsScreen({ onOpenProfile }: { onOpenProfile: (tag: string) 
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-bold">Друзья</h1>
 
       {data.incoming.length > 0 && (
         <section className="flex flex-col gap-2">
