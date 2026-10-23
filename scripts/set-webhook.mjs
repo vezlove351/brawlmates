@@ -35,7 +35,8 @@ async function callTelegram(method, body) {
 await callTelegram("setWebhook", {
   url: `${appUrl}/api/bot`,
   secret_token: secret,
-  allowed_updates: ["message"],
+  // message — команды боту, callback_query — нажатия кнопок «Буду» / «Не смогу».
+  allowed_updates: ["message", "callback_query"],
   drop_pending_updates: true,
 });
 

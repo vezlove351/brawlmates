@@ -6,6 +6,7 @@ import { apiPost } from "@/lib/api-client";
 import { formatNumber } from "@/lib/format";
 import { Button } from "./Button";
 import { PlayerAvatar } from "./PlayerAvatar";
+import { TeamGame, type TeamGameData } from "./TeamGame";
 import { TeamStats } from "./TeamStats";
 
 // Набор эмблем (ключи совпадают с lib/teams.ts на сервере).
@@ -33,6 +34,7 @@ interface TeamData {
     maxMembers: number;
   } | null;
   candidates?: { tag: string; name: string; trophies: number | null }[];
+  game?: TeamGameData | null;
   invites: { code: string; name: string; emblem: string }[];
 }
 
@@ -210,6 +212,10 @@ function MyTeam({
           </div>
         ))}
       </section>
+
+      {team.members.length >= 2 && (
+        <TeamGame game={data.game ?? null} isCaptain={isCaptain} busy={busy} act={act} />
+      )}
 
       <TeamStats teamSize={team.members.length} />
 

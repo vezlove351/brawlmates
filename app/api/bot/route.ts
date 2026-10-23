@@ -16,5 +16,12 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const handle = webhookCallback(getBot(), "std/http");
-  return handle(request);
+  try {
+    return await handle(request);
+  } catch (err) {
+    // Ошибку пишем в лог, но Telegram отвечаем «принято» — иначе он будет присылать
+    // это же обновление снова и снова.
+    console.error("Вебхук бота:", err instanceof Error ? err.message : err);
+    return new Response("ok");
+  }
 }

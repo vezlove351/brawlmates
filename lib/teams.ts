@@ -6,6 +6,7 @@ import { friendIds } from "./friends-server";
 import { LfgError } from "./lfg-server";
 import { APP_SHORT_NAME, BOT_USERNAME } from "./links";
 import { checkComment } from "./moderation";
+import { getTeamGame } from "./team-games";
 
 export const TEAM_MAX_MEMBERS = 3;
 export const TEAM_NAME_MAX = 24;
@@ -126,6 +127,7 @@ export async function getMyTeam(userId: number) {
       })),
       maxMembers: TEAM_MAX_MEMBERS,
     },
+    game: await getTeamGame(userId, membership.teamId),
     candidates: candidates
       .filter((c) => c.tag)
       .map((c) => ({ tag: c.tag!, name: c.profile?.name ?? c.tag!, trophies: c.profile?.trophies ?? null })),

@@ -28,7 +28,9 @@ export function useAuth(): { auth: AuthState; updateUser: (patch: Partial<AuthUs
     if (telegram !== "ready" || !raw) return;
 
     let cancelled = false;
-    apiPost<{ user: AuthUser }>("/api/auth").then((result) => {
+    // Часовой пояс телефона — для времени игр команды.
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    apiPost<{ user: AuthUser }>("/api/auth", { timeZone }).then((result) => {
       if (cancelled) return;
       setState(
         result.ok

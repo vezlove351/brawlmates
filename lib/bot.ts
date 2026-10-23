@@ -1,5 +1,8 @@
 import { createHash } from "node:crypto";
 import { Bot, InlineKeyboard } from "grammy";
+import { inviteMessageFor } from "./game-notify";
+import { LfgError } from "./lfg-server";
+import { answerGame } from "./team-games";
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -39,6 +42,29 @@ export function getBot(): Bot {
       "Привет! Это Brawlmates — твой профиль Brawl Stars прямо в Telegram.",
       { reply_markup: keyboard },
     );
+  });
+
+  // Кнопки «Буду» / «Не смогу» в приглашении на игру команды.
+  bot.callbackQuery(/^game:(\d+):(yes|no)$/, async (ctx) => {
+    const gameId = Number(ctx.match[1]);
+    const answer = ctx.match[2] === "yes" ? "yes" : "no";
+    try {
+      // answerGame сам проверяет, что нажавший — участник этой команды.
+      await answerGame(ctx.from.id, gameId, answer);
+      // Ответ на нажатие может не дойти (например, если прошло слишком много времени) — это не страшно.
+      await ctx
+        .answerCallbackQuery({ text: answer === "yes" ? "Записал: ты будешь ✅" : "Записал: не сможешь" })
+        .catch(() => {});
+      const message = await inviteMessageFor(gameId, ctx.from.id);
+      if (message) await ctx.editMessageText(message.text, { reply_markup: message.reply_markup }).catch(() => {});
+    } catch (err) {
+      await ctx
+        .answerCallbackQuery({
+          text: err instanceof LfgError ? err.message : "Не получилось, попробуй в приложении",
+          show_alert: true,
+        })
+        .catch(() => {});
+    }
   });
 
   bot.catch((err) => {
