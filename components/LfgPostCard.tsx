@@ -1,10 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { brawlerIconUrl } from "@/lib/brawlstars";
 import { formatNumber } from "@/lib/format";
 import { bracketLabel, findLanguage, findMode } from "@/lib/lfg";
 import type { PublicLfgPost } from "@/lib/lfg-server";
+import { BrawlerIcon } from "./BrawlerIcon";
 import { formatTimeLeft, useNow } from "./useNow";
 
 // Карточка заявки «ищу тиммейта». Кнопки действий передаются снаружи (children).
@@ -32,8 +32,7 @@ export function LfgPostCard({ post, children }: { post: PublicLfgPost; children?
 
       <div className="flex items-center gap-2">
         {post.brawlerIds.map((id) => (
-          // eslint-disable-next-line @next/next/no-img-element -- иконка с CDN Brawlify
-          <img key={id} src={brawlerIconUrl(id)} alt="" width={44} height={44} className="h-11 w-11 rounded-lg" />
+          <BrawlerIcon key={id} id={id} size={44} className="h-11 w-11 rounded-lg" />
         ))}
       </div>
 

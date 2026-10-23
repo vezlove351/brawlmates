@@ -1,17 +1,15 @@
-import { brawlerIconUrl, type PlayerBrawler } from "@/lib/brawlstars";
+import type { PlayerBrawler } from "@/lib/brawlstars";
 import { formatNumber } from "@/lib/format";
+import { BrawlerIcon } from "./BrawlerIcon";
 
 export function BrawlerCard({ brawler }: { brawler: PlayerBrawler }) {
   return (
     <div className="flex flex-col gap-1 rounded-2xl bg-tg-secondary-bg p-2">
       <div className="relative">
-        {/* eslint-disable-next-line @next/next/no-img-element -- картинки с CDN Brawlify, их много и они маленькие */}
-        <img
-          src={brawlerIconUrl(brawler.id)}
-          alt={brawler.name}
-          width={200}
-          height={200}
-          loading="lazy"
+        <BrawlerIcon
+          id={brawler.id}
+          name={brawler.name}
+          size={110}
           className="aspect-square w-full rounded-xl bg-black/10"
         />
         {/* Сила — как в игре, кружок в углу */}

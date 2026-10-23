@@ -1,4 +1,4 @@
-import { brawlerIconUrl } from "@/lib/brawlstars";
+import { BrawlerIcon } from "./BrawlerIcon";
 import { modeName } from "@/lib/modes";
 
 export interface BattleItem {
@@ -33,15 +33,7 @@ export function BattleRow({ battle }: { battle: BattleItem }) {
   return (
     <li className="flex items-center gap-3 rounded-2xl bg-tg-secondary-bg p-2">
       {battle.brawlerId ? (
-        // eslint-disable-next-line @next/next/no-img-element -- иконка с CDN Brawlify
-        <img
-          src={brawlerIconUrl(battle.brawlerId)}
-          alt=""
-          width={44}
-          height={44}
-          loading="lazy"
-          className="h-11 w-11 shrink-0 rounded-xl"
-        />
+        <BrawlerIcon id={battle.brawlerId} size={44} className="h-11 w-11 shrink-0 rounded-xl" />
       ) : (
         <div className="h-11 w-11 shrink-0 rounded-xl bg-black/10" />
       )}

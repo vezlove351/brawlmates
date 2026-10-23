@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { brawlerIconUrl, type PlayerBrawler } from "@/lib/brawlstars";
+import type { PlayerBrawler } from "@/lib/brawlstars";
+import { BrawlerIcon } from "./BrawlerIcon";
 
 const SHOW_FIRST = 12;
 
@@ -39,15 +40,7 @@ export function BrawlerPicker({ brawlers, selected, max, onChange }: BrawlerPick
                 isSelected ? "ring-3 ring-tg-button" : ""
               }`}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element -- иконка с CDN Brawlify */}
-              <img
-                src={brawlerIconUrl(b.id)}
-                alt={b.name}
-                width={56}
-                height={56}
-                loading="lazy"
-                className="aspect-square w-full rounded-lg"
-              />
+              <BrawlerIcon id={b.id} name={b.name} size={56} className="aspect-square w-full rounded-lg" />
               {isSelected && (
                 <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-tg-button text-xs font-bold text-tg-button-text">
                   {selected.indexOf(b.id) + 1}
