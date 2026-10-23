@@ -6,6 +6,7 @@ export interface LfgFilterValues {
   mode: string;
   bracket: string;
   language: string;
+  friendsOnly: boolean;
 }
 
 // Фильтры ленты: три компактных выпадающих списка в ряд.
@@ -20,45 +21,56 @@ export function LfgFilters({
     "min-w-0 flex-1 rounded-xl bg-tg-secondary-bg px-2 py-2 text-sm font-semibold outline-none";
 
   return (
-    <div className="flex gap-2">
-      <select
-        aria-label="Режим"
-        className={selectClass}
-        value={value.mode}
-        onChange={(e) => onChange({ ...value, mode: e.target.value })}
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={() => onChange({ ...value, friendsOnly: !value.friendsOnly })}
+        className={`self-start rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
+          value.friendsOnly ? "bg-tg-button text-tg-button-text" : "bg-tg-secondary-bg text-tg-hint"
+        }`}
       >
-        <option value="">🎮 Режим</option>
-        {LFG_MODES.filter((m) => m.id !== "any").map((m) => (
-          <option key={m.id} value={m.id}>
-            {m.emoji} {m.label}
-          </option>
-        ))}
-      </select>
-      <select
-        aria-label="Трофеи автора"
-        className={selectClass}
-        value={value.bracket}
-        onChange={(e) => onChange({ ...value, bracket: e.target.value })}
-      >
-        {TROPHY_BRACKETS.map((b) => (
-          <option key={b.id} value={b.id}>
-            🏆 {b.id === "any" ? "Любые" : b.label}
-          </option>
-        ))}
-      </select>
-      <select
-        aria-label="Язык"
-        className={selectClass}
-        value={value.language}
-        onChange={(e) => onChange({ ...value, language: e.target.value })}
-      >
-        <option value="">🌐 Язык</option>
-        {LFG_LANGUAGES.map((l) => (
-          <option key={l.id} value={l.id}>
-            {l.label}
-          </option>
-        ))}
-      </select>
+        👥 Только друзья
+      </button>
+      <div className="flex gap-2">
+        <select
+          aria-label="Режим"
+          className={selectClass}
+          value={value.mode}
+          onChange={(e) => onChange({ ...value, mode: e.target.value })}
+        >
+          <option value="">🎮 Режим</option>
+          {LFG_MODES.filter((m) => m.id !== "any").map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.emoji} {m.label}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Трофеи автора"
+          className={selectClass}
+          value={value.bracket}
+          onChange={(e) => onChange({ ...value, bracket: e.target.value })}
+        >
+          {TROPHY_BRACKETS.map((b) => (
+            <option key={b.id} value={b.id}>
+              🏆 {b.id === "any" ? "Любые" : b.label}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Язык"
+          className={selectClass}
+          value={value.language}
+          onChange={(e) => onChange({ ...value, language: e.target.value })}
+        >
+          <option value="">🌐 Язык</option>
+          {LFG_LANGUAGES.map((l) => (
+            <option key={l.id} value={l.id}>
+              {l.label}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 }

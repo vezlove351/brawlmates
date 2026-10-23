@@ -26,7 +26,12 @@ export function LfgScreen({
   const profile = useProfile(playerTag, "own");
   const [mine, setMine] = useState<MyLfgState | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [filters, setFilters] = useState<LfgFilterValues>({ mode: "", bracket: "any", language: "" });
+  const [filters, setFilters] = useState<LfgFilterValues>({
+    mode: "",
+    bracket: "any",
+    language: "",
+    friendsOnly: false,
+  });
   const [feed, setFeed] = useState<{ key: string; posts: FeedPost[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -115,7 +120,9 @@ export function LfgScreen({
           <div className="h-48 animate-pulse rounded-2xl bg-tg-secondary-bg" />
         ) : feed.posts.length === 0 ? (
           <Note>
-            Сейчас никто не ищет тиммейта с такими фильтрами. Создай свою заявку — тебя найдут!
+            {filters.friendsOnly
+              ? "Сейчас никто из друзей не ищет тиммейта. Создай свою заявку — друзья её увидят!"
+              : "Сейчас никто не ищет тиммейта с такими фильтрами. Создай свою заявку — тебя найдут!"}
           </Note>
         ) : (
           feed.posts.map((post) => (

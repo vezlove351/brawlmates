@@ -42,7 +42,7 @@ export async function getPlayerProfile(tag: string): Promise<CachedProfile> {
 }
 
 // Готовый HTTP-ответ с профилем — общий для своего и чужого профиля.
-export async function profileResponse(tag: string): Promise<Response> {
+export async function profileResponse(tag: string, extra: Record<string, unknown> = {}): Promise<Response> {
   try {
     const { profile, fetchedAt, stale } = await getPlayerProfile(tag);
     return Response.json({
@@ -50,6 +50,7 @@ export async function profileResponse(tag: string): Promise<Response> {
       stale,
       // Считаем на сервере, чтобы клиенту не зависеть от часов телефона.
       updatedMinutesAgo: Math.floor((Date.now() - fetchedAt.getTime()) / 60_000),
+      ...extra,
     });
   } catch (err) {
     if (err instanceof BrawlStarsError) {

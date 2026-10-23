@@ -8,6 +8,8 @@ export interface ProfileResponse {
   profile: PlayerProfile;
   stale: boolean;
   updatedMinutesAgo: number;
+  // Для чужого профиля: true — мы друзья, виден полный профиль (с боями).
+  full?: boolean;
 }
 
 export type ProfileState =

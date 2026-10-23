@@ -23,19 +23,21 @@ const formatDay = (day: string) =>
     timeZone: "UTC",
   });
 
-export function BattlesTab() {
+// playerTag — бои друга; без него — свои.
+export function BattlesTab({ playerTag }: { playerTag?: string } = {}) {
   const [state, setState] = useState<State>({ status: "loading" });
+  const own = !playerTag;
 
   useEffect(() => {
     let cancelled = false;
-    apiPost<BattlesResponse>("/api/battles").then((result) => {
+    apiPost<BattlesResponse>("/api/battles", playerTag ? { tag: playerTag } : undefined).then((result) => {
       if (cancelled) return;
       setState(result.ok ? { status: "ok", data: result.data } : { status: "error", message: result.error });
     });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [playerTag]);
 
   if (state.status === "loading") {
     return <div className="h-96 animate-pulse rounded-3xl bg-tg-secondary-bg" />;
@@ -55,8 +57,8 @@ export function BattlesTab() {
         ) : (
           <Note>
             {trackingSince
-              ? `Мы начали следить за твоими трофеями ${formatDay(trackingSince)}. График появится, когда наберётся хотя бы 2 дня — загляни завтра!`
-              : "Мы ещё не успели сохранить твои трофеи. Загляни через полчаса."}
+              ? `Мы начали следить за ${own ? "твоими трофеями" : "трофеями игрока"} ${formatDay(trackingSince)}. График появится, когда наберётся хотя бы 2 дня — загляни завтра!`
+              : `Мы ещё не успели сохранить ${own ? "твои трофеи" : "трофеи игрока"}. Загляни через полчаса.`}
           </Note>
         )}
       </section>
@@ -71,8 +73,8 @@ export function BattlesTab() {
           </ul>
         ) : (
           <Note>
-            Боёв пока нет. Мы сохраняем новые бои каждые 30 минут — сыграй пару матчей и загляни
-            позже.
+            Боёв пока нет. Мы сохраняем новые бои каждые 30 минут
+            {own ? " — сыграй пару матчей и загляни позже." : "."}
           </Note>
         )}
         {trackingSince && battles.length > 0 && (

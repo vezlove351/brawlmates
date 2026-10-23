@@ -3,6 +3,7 @@ import { authenticate } from "@/lib/auth";
 import { isValidTag, normalizeTag } from "@/lib/brawlstars";
 import { getDb } from "@/lib/db";
 import { users } from "@/lib/db/schema";
+import { areFriends } from "@/lib/friends-server";
 import { profileResponse } from "@/lib/profile";
 
 // Чужой профиль по ссылке — только просмотр.
@@ -29,5 +30,8 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  return profileResponse(tag);
+  // Друг видит полный профиль (с боями и графиком), остальные — только карточку.
+  // Проверка здесь, на сервере; сами бои отдаёт /api/battles — с той же проверкой.
+  const full = await areFriends(tgUser.id, owner.id);
+  return profileResponse(tag, { full });
 }

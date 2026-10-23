@@ -8,6 +8,7 @@ export function POST(request: Request) {
       mode: typeof body.mode === "string" ? body.mode : undefined,
       bracket: typeof body.bracket === "string" ? body.bracket : undefined,
       language: typeof body.language === "string" ? body.language : undefined,
+      friendsOnly: body.friendsOnly === true,
     }),
   }));
 }

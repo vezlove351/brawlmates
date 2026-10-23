@@ -2,6 +2,7 @@ import { and, count, desc, eq, gt, gte, inArray, isNull, lt, ne, notExists, sql 
 import { scheduleRemoval } from "./channel";
 import { getDb } from "./db";
 import {
+  friendships,
   hiddenUsers,
   lfgPosts,
   lfgReports,
@@ -178,6 +179,7 @@ export interface FeedFilters {
   mode?: string; // id режима или пусто — все
   bracket?: string; // трофеи автора
   language?: string;
+  friendsOnly?: boolean; // только заявки моих друзей
 }
 
 // Активные заявки для ленты: без своих, без скрытых мной игроков, без заблокированных авторов.
@@ -209,6 +211,15 @@ export async function getFeed(viewerId: number, filters: FeedFilters) {
 
   const language = filters.language ? findLanguage(filters.language) : undefined;
   if (language) conditions.push(eq(lfgPosts.language, language.id));
+
+  if (filters.friendsOnly) {
+    // Автор — мой друг (дружба взаимная, направление заявки неважно).
+    conditions.push(
+      sql`exists (select 1 from ${friendships} where ${friendships.status} = 'accepted' and (
+        (${friendships.requesterId} = ${viewerId} and ${friendships.addresseeId} = ${lfgPosts.authorId}) or
+        (${friendships.addresseeId} = ${viewerId} and ${friendships.requesterId} = ${lfgPosts.authorId})))`,
+    );
+  }
 
   const rows = await db
     .select({

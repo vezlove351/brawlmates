@@ -36,11 +36,16 @@ export function PlayerView({ playerTag, readonly = false, renderNotFound }: Play
     return renderNotFound(state.message);
   }
 
+  // Друг видит и вкладку «Бои» (право проверяет сервер, тут — только показ).
+  const isFriend = readonly && state.status === "ok" && state.data.full === true;
+  const tabs = !readonly || isFriend ? OWN_TABS : PUBLIC_TABS;
+
   return (
     <div className="flex flex-col gap-4">
-      <Tabs options={readonly ? PUBLIC_TABS : OWN_TABS} value={tab} onChange={setTab} />
-      {tab === "battles" && !readonly ? (
-        <BattlesTab />
+      {isFriend && <p className="-mb-2 text-xs text-tg-hint">👥 Вы друзья — тебе виден полный профиль</p>}
+      <Tabs options={tabs} value={tab} onChange={setTab} />
+      {tab === "battles" && (!readonly || isFriend) ? (
+        <BattlesTab playerTag={readonly ? playerTag : undefined} />
       ) : (
         <ProfileTabs tab={tab} state={state} readonly={readonly} />
       )}
