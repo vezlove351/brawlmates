@@ -64,6 +64,8 @@ export const battles = pgTable(
     rank: integer("rank"),
     trophyChange: integer("trophy_change"),
     brawlerId: integer("brawler_id"),
+    // Теги сокомандников в этом бою (без самого игрока). Пусто — бой сохранён до появления поля.
+    teammates: text("teammates").array(),
   },
   (t) => [uniqueIndex("battles_player_time_idx").on(t.playerTag, t.battleTime)],
 );

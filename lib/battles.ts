@@ -1,4 +1,4 @@
-import { asc, desc, eq, gte, and } from "drizzle-orm";
+import { and, asc, desc, eq, gte, isNull, sql } from "drizzle-orm";
 import { fetchBattleLog } from "./brawlstars";
 import { getDb } from "./db";
 import { battles, trophyHistory } from "./db/schema";
@@ -17,13 +17,19 @@ export async function syncPlayer(tag: string): Promise<{ newBattles: number }> {
   const log = await fetchBattleLog(tag);
   let newBattles = 0;
   if (log.length > 0) {
-    // Уже сохранённые бои (тот же тег + то же время) база просто пропустит.
-    const inserted = await db
+    // Уже сохранённые бои (тот же тег + то же время) не дублируем. Если у старой записи
+    // ещё нет состава команды — дописываем его (нужно для статистики команд).
+    const rows = await db
       .insert(battles)
       .values(log.map((b) => ({ ...b, playerTag: tag })))
-      .onConflictDoNothing({ target: [battles.playerTag, battles.battleTime] })
-      .returning({ id: battles.id });
-    newBattles = inserted.length;
+      .onConflictDoUpdate({
+        target: [battles.playerTag, battles.battleTime],
+        set: { teammates: sql`excluded.teammates` },
+        setWhere: isNull(battles.teammates),
+      })
+      // xmax = 0 — строка именно вставлена, а не обновлена.
+      .returning({ inserted: sql<boolean>`(xmax = 0)` });
+    newBattles = rows.filter((r) => r.inserted).length;
   }
 
   // Точка для графика: трофеи на сегодня (перезаписываем в течение дня).

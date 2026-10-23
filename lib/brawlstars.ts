@@ -194,6 +194,7 @@ export interface Battle {
   rank: number | null;
   trophyChange: number | null;
   brawlerId: number | null;
+  teammates: string[];
 }
 
 // "20261022T130858.000Z" → Date
@@ -213,6 +214,9 @@ export async function fetchBattleLog(tag: string): Promise<Battle[]> {
       // Ищем самого игрока среди участников, чтобы узнать, каким бравлером он играл.
       const everyone = [...(battle.teams?.flat() ?? []), ...(battle.players ?? [])];
       const me = everyone.find((p) => p.tag === tag);
+      // Сокомандники — остальные игроки моей команды (в одиночном «Столкновении» их нет).
+      const myTeam = battle.teams?.find((team) => team.some((p) => p.tag === tag)) ?? [];
+      const teammates = myTeam.map((p) => p.tag).filter((t) => t !== tag);
       // event.mode точнее (например, «5 на 5»), но иногда приходит "unknown".
       const mode = event.mode && event.mode !== "unknown" ? event.mode : (battle.mode ?? "unknown");
 
@@ -225,6 +229,7 @@ export async function fetchBattleLog(tag: string): Promise<Battle[]> {
         rank: battle.rank ?? null,
         trophyChange: battle.trophyChange ?? null,
         brawlerId: me?.brawler?.id ?? me?.brawlers?.[0]?.id ?? null,
+        teammates,
       };
     })
     .filter((b) => !Number.isNaN(b.battleTime.getTime()));

@@ -6,6 +6,7 @@ import { apiPost } from "@/lib/api-client";
 import { formatNumber } from "@/lib/format";
 import { Button } from "./Button";
 import { PlayerAvatar } from "./PlayerAvatar";
+import { TeamStats } from "./TeamStats";
 
 // Набор эмблем (ключи совпадают с lib/teams.ts на сервере).
 const EMBLEMS: [string, string][] = [
@@ -209,6 +210,8 @@ function MyTeam({
           </div>
         ))}
       </section>
+
+      <TeamStats teamSize={team.members.length} />
 
       {hasRoom && (
         <section className="flex flex-col gap-2 rounded-2xl bg-tg-secondary-bg p-4">
