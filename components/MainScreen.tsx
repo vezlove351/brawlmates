@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { initData, useSignal } from "@telegram-apps/sdk-react";
 import { parseProfileStartParam } from "@/lib/links";
+import { BottomNav, type Section } from "./BottomNav";
 import { Greeting } from "./Greeting";
+import { LfgScreen } from "./LfgScreen";
 import { LinkAccount } from "./LinkAccount";
 import { PlayerView } from "./PlayerView";
 import { PublicProfile } from "./PublicProfile";
@@ -14,6 +16,7 @@ export function MainScreen() {
   // Если приложение открыли по ссылке на чужой профиль (startapp=p_ТЕГ).
   const sharedTag = parseProfileStartParam(useSignal(initData.startParam));
   const [showOwn, setShowOwn] = useState(false);
+  const [section, setSection] = useState<Section>("profile");
 
   if (auth.status === "loading") {
     return <Centered><p className="text-tg-hint">Загрузка…</p></Centered>;
@@ -41,14 +44,29 @@ export function MainScreen() {
     );
   }
 
+  const playerTag = auth.user.playerTag;
+
+  // Пока тег не привязан — только привязка, разделов ещё нет.
+  if (!playerTag) {
+    return (
+      <div className="mx-auto flex w-full max-w-md flex-col gap-6 p-4">
+        <Greeting firstName={auth.user.firstName} createdAt={auth.user.createdAt} />
+        <LinkAccount onLinked={(tag) => updateUser({ playerTag: tag })} />
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-6 p-4">
-      <Greeting firstName={auth.user.firstName} createdAt={auth.user.createdAt} />
-      {auth.user.playerTag ? (
-        <PlayerView playerTag={auth.user.playerTag} />
+      {section === "profile" ? (
+        <>
+          <Greeting firstName={auth.user.firstName} createdAt={auth.user.createdAt} />
+          <PlayerView playerTag={playerTag} />
+        </>
       ) : (
-        <LinkAccount onLinked={(playerTag) => updateUser({ playerTag })} />
+        <LfgScreen playerTag={playerTag} />
       )}
+      <BottomNav value={section} onChange={setSection} />
     </div>
   );
 }
