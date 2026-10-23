@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
+  check,
   date,
   index,
   integer,
@@ -87,6 +88,8 @@ export const privacySettings = pgTable("privacy_settings", {
   showTelegramContact: boolean("show_telegram_contact").notNull().default(false),
   // @username храним, только пока показ включён (минимум данных).
   telegramUsername: text("telegram_username"),
+  // Принимать заявки в друзья. По умолчанию — да, от всех в Brawlmates.
+  acceptFriendRequests: boolean("accept_friend_requests").notNull().default(true),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -188,6 +191,41 @@ export const hiddenUsers = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.userId, t.hiddenUserId] })],
+);
+
+// ===================== Этап 3: друзья =====================
+
+// pending — заявка ждёт ответа; accepted — вы друзья;
+// declined — отклонена (для отправителя выглядит как «отправлена», повторно отправить нельзя).
+export type FriendshipStatus = "pending" | "accepted" | "declined";
+
+// Дружба между двумя пользователями. Одна строка на пару — неважно, кто кому написал.
+export const friendships = pgTable(
+  "friendships",
+  {
+    id: serial("id").primaryKey(),
+    requesterId: bigint("requester_id", { mode: "number" })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    addresseeId: bigint("addressee_id", { mode: "number" })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: text("status").$type<FriendshipStatus>().notNull().default("pending"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    respondedAt: timestamp("responded_at", { withTimezone: true }),
+  },
+  (t) => [
+    // Одна пара — одна строка: A→B и B→A считаются одной и той же дружбой.
+    uniqueIndex("friendships_pair_idx").on(
+      sql`least(${t.requesterId}, ${t.addresseeId})`,
+      sql`greatest(${t.requesterId}, ${t.addresseeId})`,
+    ),
+    // Нельзя дружить с самим собой.
+    check("friendships_not_self", sql`${t.requesterId} <> ${t.addresseeId}`),
+    // Входящие заявки и лимит «20 исходящих в сутки».
+    index("friendships_addressee_idx").on(t.addresseeId, t.status),
+    index("friendships_requester_created_idx").on(t.requesterId, t.createdAt),
+  ],
 );
 
 export type User = typeof users.$inferSelect;
