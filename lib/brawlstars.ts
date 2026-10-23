@@ -229,3 +229,29 @@ export async function fetchBattleLog(tag: string): Promise<Battle[]> {
     })
     .filter((b) => !Number.isNaN(b.battleTime.getTime()));
 }
+
+// --- Рейтинги ---
+
+interface ApiRankingPlayer {
+  tag: string;
+  name: string;
+  icon: { id: number };
+  trophies: number;
+  rank: number;
+  club?: { name?: string };
+}
+
+// Топ-200 игроков: key = "global" или код страны ("RU").
+export async function fetchRanking(key: string) {
+  const data = await apiGet<{ items: ApiRankingPlayer[] }>(
+    `/rankings/${encodeURIComponent(key)}/players?limit=200`,
+  );
+  return data.items.map((p) => ({
+    rank: p.rank,
+    tag: p.tag,
+    name: p.name,
+    iconId: p.icon.id,
+    trophies: p.trophies,
+    club: p.club?.name ?? null,
+  }));
+}

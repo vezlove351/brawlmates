@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { apiPost } from "@/lib/api-client";
-import { iconUrl, remoteIconUrl } from "@/lib/brawlstars";
 import { formatNumber } from "@/lib/format";
 import type { PlayerCard } from "@/lib/friends-server";
 import { Button } from "./Button";
+import { PlayerAvatar } from "./PlayerAvatar";
 import { formatAgo, useNow } from "./useNow";
 
 interface FriendsData {
@@ -121,20 +121,6 @@ function PlayerRow({ player, onClick, extra }: { player: PlayerCard; onClick: ()
   );
 }
 
-function PlayerAvatar({ iconId }: { iconId: number | null }) {
-  const [failed, setFailed] = useState(false);
-  return (
-    // eslint-disable-next-line @next/next/no-img-element -- иконка профиля с CDN Brawlify
-    <img
-      src={iconId && !failed ? remoteIconUrl(iconId) : iconUrl(28000000)}
-      onError={() => setFailed(true)}
-      alt=""
-      width={44}
-      height={44}
-      className="h-11 w-11 shrink-0 rounded-xl"
-    />
-  );
-}
 
 function Note({ children }: { children: React.ReactNode }) {
   return <div className="rounded-2xl bg-tg-secondary-bg p-4 text-center text-sm text-tg-hint">{children}</div>;

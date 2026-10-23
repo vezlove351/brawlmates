@@ -2,12 +2,13 @@
 
 import { useEffect } from "react";
 
-export type Section = "profile" | "lfg" | "friends" | "settings";
+export type Section = "profile" | "lfg" | "friends" | "rating" | "settings";
 
 const ITEMS: { value: Section; label: string; emoji: string }[] = [
   { value: "profile", label: "Профиль", emoji: "👤" },
   { value: "lfg", label: "Тиммейты", emoji: "🤝" },
-  { value: "friends", label: "Друзья", emoji: "👥" },
+  { value: "friends", label: "Друзья", emoji: "🧑‍🤝‍🧑" },
+  { value: "rating", label: "Рейтинг", emoji: "🏆" },
   { value: "settings", label: "Настройки", emoji: "⚙️" },
 ];
 

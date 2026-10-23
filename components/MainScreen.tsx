@@ -5,6 +5,7 @@ import { initData, useSignal } from "@telegram-apps/sdk-react";
 import { parseProfileStartParam } from "@/lib/links";
 import { BottomNav, type Section } from "./BottomNav";
 import { FriendsScreen } from "./FriendsScreen";
+import { LeaderboardScreen } from "./LeaderboardScreen";
 import { Greeting } from "./Greeting";
 import { LfgScreen } from "./LfgScreen";
 import { LinkAccount } from "./LinkAccount";
@@ -81,6 +82,8 @@ export function MainScreen() {
         <LfgScreen playerTag={playerTag} onOpenProfile={setViewingTag} />
       ) : section === "friends" ? (
         <FriendsScreen onOpenProfile={setViewingTag} />
+      ) : section === "rating" ? (
+        <LeaderboardScreen onOpenProfile={setViewingTag} />
       ) : (
         <SettingsScreen />
       )}

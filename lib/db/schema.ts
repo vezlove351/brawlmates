@@ -193,6 +193,23 @@ export const hiddenUsers = pgTable(
   (t) => [primaryKey({ columns: [t.userId, t.hiddenUserId] })],
 );
 
+// Кеш рейтингов Brawl Stars (мировой и по странам) — обновляем не чаще раза в 10 минут.
+export const rankingsCache = pgTable("rankings_cache", {
+  // "global" или код страны: "RU", "UA", ...
+  key: text("key").primaryKey(),
+  data: jsonb("data").$type<RankingEntry[]>().notNull(),
+  fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull(),
+});
+
+export interface RankingEntry {
+  rank: number;
+  tag: string;
+  name: string;
+  iconId: number;
+  trophies: number;
+  club: string | null;
+}
+
 // ===================== Этап 3: друзья =====================
 
 // pending — заявка ждёт ответа; accepted — вы друзья;

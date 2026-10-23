@@ -50,6 +50,13 @@
       "when": 1792755965010,
       "tag": "0006_public_spacker_dave",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792757402178,
+      "tag": "0007_plain_penance",
+      "breakpoints": true
     }
   ]
 }
