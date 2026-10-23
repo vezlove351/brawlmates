@@ -1,12 +1,19 @@
 "use client";
 
+import { useState } from "react";
+import { initData, useSignal } from "@telegram-apps/sdk-react";
+import { parseProfileStartParam } from "@/lib/links";
 import { Greeting } from "./Greeting";
 import { LinkAccount } from "./LinkAccount";
 import { PlayerView } from "./PlayerView";
+import { PublicProfile } from "./PublicProfile";
 import { useAuth } from "./useAuth";
 
 export function MainScreen() {
   const { auth, updateUser } = useAuth();
+  // Если приложение открыли по ссылке на чужой профиль (startapp=p_ТЕГ).
+  const sharedTag = parseProfileStartParam(useSignal(initData.startParam));
+  const [showOwn, setShowOwn] = useState(false);
 
   if (auth.status === "loading") {
     return <Centered><p className="text-tg-hint">Загрузка…</p></Centered>;
@@ -23,6 +30,15 @@ export function MainScreen() {
 
   if (auth.status === "error") {
     return <Centered><p className="text-tg-hint">{auth.message}</p></Centered>;
+  }
+
+  // Ссылка на свой же профиль — просто показываем обычный режим.
+  if (sharedTag && sharedTag !== auth.user.playerTag && !showOwn) {
+    return (
+      <div className="mx-auto flex w-full max-w-md flex-col gap-6 p-4">
+        <PublicProfile playerTag={sharedTag} onOpenOwn={() => setShowOwn(true)} />
+      </div>
+    );
   }
 
   return (

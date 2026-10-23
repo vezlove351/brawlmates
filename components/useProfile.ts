@@ -12,27 +12,35 @@ export interface ProfileResponse {
 
 export type ProfileState =
   | { status: "loading" }
-  | { status: "error"; message: string }
+  | { status: "error"; message: string; notFound: boolean }
   | { status: "ok"; data: ProfileResponse };
 
-// Загружает профиль привязанного игрока. playerTag — чтобы перезагрузить при смене тега.
-export function useProfile(playerTag: string): ProfileState {
-  const [state, setState] = useState<{ tag: string; value: ProfileState } | null>(null);
+// Загружает профиль: свой ("own") или чужой по ссылке ("public").
+export function useProfile(playerTag: string, source: "own" | "public"): ProfileState {
+  const key = `${source}:${playerTag}`;
+  const [state, setState] = useState<{ key: string; value: ProfileState } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    apiPost<ProfileResponse>("/api/profile").then((result) => {
+    const request =
+      source === "own"
+        ? apiPost<ProfileResponse>("/api/profile")
+        : apiPost<ProfileResponse>("/api/public-profile", { tag: playerTag });
+
+    request.then((result) => {
       if (cancelled) return;
       setState({
-        tag: playerTag,
-        value: result.ok ? { status: "ok", data: result.data } : { status: "error", message: result.error },
+        key,
+        value: result.ok
+          ? { status: "ok", data: result.data }
+          : { status: "error", message: result.error, notFound: result.status === 404 },
       });
     });
     return () => {
       cancelled = true;
     };
-  }, [playerTag]);
+  }, [key, playerTag, source]);
 
-  // Пока не пришёл ответ для текущего тега — показываем загрузку.
-  return state?.tag === playerTag ? state.value : { status: "loading" };
+  // Пока не пришёл ответ для текущего игрока — показываем загрузку.
+  return state?.key === key ? state.value : { status: "loading" };
 }

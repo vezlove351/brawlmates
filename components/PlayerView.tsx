@@ -1,62 +1,75 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { BattlesTab } from "./BattlesTab";
 import { BrawlerList } from "./BrawlerList";
 import { ProfileCard } from "./ProfileCard";
 import { Tabs } from "./Tabs";
-import { useProfile } from "./useProfile";
+import { useProfile, type ProfileState } from "./useProfile";
 
 type Tab = "profile" | "brawlers" | "battles";
 
-const TAB_OPTIONS: { value: Tab; label: string }[] = [
+const OWN_TABS: { value: Tab; label: string }[] = [
   { value: "profile", label: "Профиль" },
   { value: "brawlers", label: "Бравлеры" },
   { value: "battles", label: "Бои" },
 ];
 
-// Всё про привязанного игрока: вкладки «Профиль», «Бравлеры» и «Бои».
-// Профиль загружается один раз и общий для первых двух вкладок.
-export function PlayerView({ playerTag }: { playerTag: string }) {
-  const state = useProfile(playerTag);
+// В чужом профиле истории боёв нет — только карточка и бравлеры.
+const PUBLIC_TABS = OWN_TABS.filter((t) => t.value !== "battles");
+
+interface PlayerViewProps {
+  playerTag: string;
+  // true — чужой профиль по ссылке, только просмотр.
+  readonly?: boolean;
+  // Что показать, если чужой профиль не найден в Brawlmates.
+  renderNotFound?: (message: string) => ReactNode;
+}
+
+// Профиль игрока с вкладками. Данные профиля загружаются один раз на все вкладки.
+export function PlayerView({ playerTag, readonly = false, renderNotFound }: PlayerViewProps) {
+  const state = useProfile(playerTag, readonly ? "public" : "own");
   const [tab, setTab] = useState<Tab>("profile");
+
+  if (state.status === "error" && state.notFound && renderNotFound) {
+    return renderNotFound(state.message);
+  }
 
   return (
     <div className="flex flex-col gap-4">
-      <Tabs options={TAB_OPTIONS} value={tab} onChange={setTab} />
-
-      {tab === "battles" ? (
-        <BattlesTab />
-      ) : (
-        <>
-          {state.status === "loading" && (
-            <div className="h-96 animate-pulse rounded-3xl bg-tg-secondary-bg" />
-          )}
-
-          {state.status === "error" && (
-            <div className="rounded-3xl bg-tg-secondary-bg p-5 text-center text-tg-hint">
-              {state.message}
-            </div>
-          )}
-
-          {state.status === "ok" && (
-            <>
-              {tab === "profile" ? (
-                <ProfileCard profile={state.data.profile} />
-              ) : (
-                <BrawlerList brawlers={state.data.profile.brawlers} />
-              )}
-              <p className="text-center text-xs text-tg-hint">
-                {state.data.stale
-                  ? "Brawl Stars сейчас недоступен — показаны последние сохранённые данные"
-                  : state.data.updatedMinutesAgo < 1
-                    ? "Данные только что обновлены"
-                    : `Данные обновлены ${state.data.updatedMinutesAgo} мин назад`}
-              </p>
-            </>
-          )}
-        </>
-      )}
+      <Tabs options={readonly ? PUBLIC_TABS : OWN_TABS} value={tab} onChange={setTab} />
+      {tab === "battles" && !readonly ? <BattlesTab /> : <ProfileTabs tab={tab} state={state} />}
     </div>
+  );
+}
+
+function ProfileTabs({ tab, state }: { tab: Tab; state: ProfileState }) {
+  if (state.status === "loading") {
+    return <div className="h-96 animate-pulse rounded-3xl bg-tg-secondary-bg" />;
+  }
+  if (state.status === "error") {
+    return (
+      <div className="rounded-3xl bg-tg-secondary-bg p-5 text-center text-tg-hint">
+        {state.message}
+      </div>
+    );
+  }
+
+  const { profile, stale, updatedMinutesAgo } = state.data;
+  return (
+    <>
+      {tab === "brawlers" ? (
+        <BrawlerList brawlers={profile.brawlers} />
+      ) : (
+        <ProfileCard profile={profile} />
+      )}
+      <p className="text-center text-xs text-tg-hint">
+        {stale
+          ? "Brawl Stars сейчас недоступен — показаны последние сохранённые данные"
+          : updatedMinutesAgo < 1
+            ? "Данные только что обновлены"
+            : `Данные обновлены ${updatedMinutesAgo} мин назад`}
+      </p>
+    </>
   );
 }
