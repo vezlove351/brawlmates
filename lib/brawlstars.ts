@@ -260,3 +260,39 @@ export async function fetchRanking(key: string) {
     club: p.club?.name ?? null,
   }));
 }
+
+// --- Справочник бравлеров и ротация карт ---
+
+interface NamedItem {
+  id: number;
+  name: string;
+}
+
+export interface CatalogBrawler {
+  id: number;
+  name: string;
+  gadgets: NamedItem[];
+  starPowers: NamedItem[];
+  gears: NamedItem[];
+}
+
+// Все бравлеры игры с их гаджетами, звёздными силами и снаряжением.
+export async function fetchBrawlerCatalog(): Promise<CatalogBrawler[]> {
+  const data = await apiGet<{ items: (CatalogBrawler & { gears?: NamedItem[] })[] }>("/brawlers");
+  const pick = (list: NamedItem[] | undefined) => (list ?? []).map((x) => ({ id: x.id, name: x.name }));
+  return data.items.map((b) => ({
+    id: b.id,
+    name: b.name,
+    gadgets: pick(b.gadgets),
+    starPowers: pick(b.starPowers),
+    gears: pick(b.gears),
+  }));
+}
+
+// Карты текущей ротации событий.
+export async function fetchRotationMaps(): Promise<{ mode: string; map: string }[]> {
+  const data = await apiGet<{ event: { mode?: string; map?: string } }[]>("/events/rotation");
+  return data
+    .filter((e) => e.event.mode && e.event.map)
+    .map((e) => ({ mode: e.event.mode!, map: e.event.map! }));
+}

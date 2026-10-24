@@ -12,6 +12,7 @@ import { PlayerView } from "./PlayerView";
 import { PublicProfile } from "./PublicProfile";
 import { SettingsScreen } from "./SettingsScreen";
 import { SocialScreen } from "./SocialScreen";
+import { TipsScreen } from "./TipsScreen";
 import { useAuth } from "./useAuth";
 
 export function MainScreen() {
@@ -78,7 +79,16 @@ export function MainScreen() {
         <PublicProfile playerTag={viewingTag} onOpenOwn={() => setViewingTag(null)} backLabel="← Назад" />
       ) : section === "profile" ? (
         <>
-          <Greeting firstName={auth.user.firstName} createdAt={auth.user.createdAt} />
+          <div className="flex items-start justify-between gap-2">
+            <Greeting firstName={auth.user.firstName} createdAt={auth.user.createdAt} />
+            <button
+              aria-label="Настройки"
+              onClick={() => setSection("settings")}
+              className="shrink-0 rounded-full bg-tg-secondary-bg px-3 py-2 text-lg"
+            >
+              ⚙️
+            </button>
+          </div>
           <PlayerView playerTag={playerTag} />
         </>
       ) : section === "lfg" ? (
@@ -87,6 +97,8 @@ export function MainScreen() {
         <SocialScreen inviteCode={teamInviteCode} onOpenProfile={setViewingTag} />
       ) : section === "rating" ? (
         <LeaderboardScreen onOpenProfile={setViewingTag} />
+      ) : section === "tips" ? (
+        <TipsScreen />
       ) : (
         <SettingsScreen />
       )}

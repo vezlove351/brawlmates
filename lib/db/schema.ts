@@ -342,5 +342,77 @@ export const teamGameResponses = pgTable(
   (t) => [primaryKey({ columns: [t.gameId, t.userId] })],
 );
 
+// ===================== Этап 3: советы =====================
+
+// Общий кеш ответов Brawl Stars API (например, справочник бравлеров).
+export const apiCache = pgTable("api_cache", {
+  key: text("key").primaryKey(),
+  data: jsonb("data").notNull(),
+  fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull(),
+});
+
+// pending — ждёт проверки модератором (первые 3 совета автора); published — в ленте;
+// hidden — скрыт после 3 жалоб до проверки; rejected — отклонён модератором; removed — удалён.
+export type TipStatus = "pending" | "published" | "hidden" | "rejected" | "removed";
+
+// Карточка-совет. Всё, кроме текста, — выбор из списков (id из Brawl Stars API).
+export const tips = pgTable(
+  "tips",
+  {
+    id: serial("id").primaryKey(),
+    authorId: bigint("author_id", { mode: "number" })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    brawlerId: integer("brawler_id").notNull(),
+    mode: text("mode"), // пусто — для любого режима
+    map: text("map"),
+    gadgetId: integer("gadget_id"),
+    starPowerId: integer("star_power_id"),
+    gearId: integer("gear_id"),
+    text: text("text").notNull(),
+    status: text("status").$type<TipStatus>().notNull().default("published"),
+    usefulCount: integer("useful_count").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("tips_feed_idx").on(t.status, t.brawlerId),
+    index("tips_author_idx").on(t.authorId, t.createdAt),
+  ],
+);
+
+// «Полезно» — один голос от человека на совет.
+export const tipVotes = pgTable(
+  "tip_votes",
+  {
+    tipId: integer("tip_id")
+      .notNull()
+      .references(() => tips.id, { onDelete: "cascade" }),
+    userId: bigint("user_id", { mode: "number" })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tipId, t.userId] })],
+);
+
+// Жалобы на советы: одна от человека, решение модератора — как у заявок LFG.
+export const tipReports = pgTable(
+  "tip_reports",
+  {
+    id: serial("id").primaryKey(),
+    tipId: integer("tip_id")
+      .notNull()
+      .references(() => tips.id, { onDelete: "cascade" }),
+    reporterId: bigint("reporter_id", { mode: "number" })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    reason: text("reason").$type<ReportReason>().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    resolution: text("resolution").$type<ReportResolution>(),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("tip_reports_once_idx").on(t.tipId, t.reporterId)],
+);
+
 export type User = typeof users.$inferSelect;
 export type BattleRow = typeof battles.$inferSelect;

@@ -2,14 +2,15 @@
 
 import { useEffect } from "react";
 
-export type Section = "profile" | "lfg" | "friends" | "rating" | "settings";
+// "settings" открывается кнопкой ⚙️ в шапке профиля, а не из панели.
+export type Section = "profile" | "lfg" | "friends" | "rating" | "tips" | "settings";
 
 const ITEMS: { value: Section; label: string; emoji: string }[] = [
   { value: "profile", label: "Профиль", emoji: "👤" },
   { value: "lfg", label: "Тиммейты", emoji: "🤝" },
   { value: "friends", label: "Друзья", emoji: "🧑‍🤝‍🧑" },
   { value: "rating", label: "Рейтинг", emoji: "🏆" },
-  { value: "settings", label: "Настройки", emoji: "⚙️" },
+  { value: "tips", label: "Советы", emoji: "💡" },
 ];
 
 // Нижняя панель разделов, как в обычных приложениях.

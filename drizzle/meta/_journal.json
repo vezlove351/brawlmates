@@ -71,6 +71,13 @@
       "when": 1792758841925,
       "tag": "0009_steep_tana_nile",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792839991599,
+      "tag": "0010_outstanding_stone_men",
+      "breakpoints": true
     }
   ]
 }

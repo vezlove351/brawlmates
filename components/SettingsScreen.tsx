@@ -89,7 +89,7 @@ export function SettingsScreen() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-bold">Настройки</h1>
+      <h1 className="text-xl font-bold">⚙️ Настройки</h1>
 
       {settings.isAdmin && (
         <Link
