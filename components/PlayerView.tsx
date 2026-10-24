@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { AnalysisTab } from "./AnalysisTab";
 import { BattlesTab } from "./BattlesTab";
 import { BrawlerList } from "./BrawlerList";
 import { ProfileCard } from "./ProfileCard";
@@ -8,16 +9,19 @@ import { ShareButton } from "./ShareButton";
 import { Tabs } from "./Tabs";
 import { useProfile, type ProfileState } from "./useProfile";
 
-type Tab = "profile" | "brawlers" | "battles";
+type Tab = "profile" | "brawlers" | "battles" | "analysis";
 
 const OWN_TABS: { value: Tab; label: string }[] = [
   { value: "profile", label: "Профиль" },
   { value: "brawlers", label: "Бравлеры" },
   { value: "battles", label: "Бои" },
+  { value: "analysis", label: "Разбор" },
 ];
 
 // В чужом профиле истории боёв нет — только карточка и бравлеры.
-const PUBLIC_TABS = OWN_TABS.filter((t) => t.value !== "battles");
+const PUBLIC_TABS = OWN_TABS.filter((t) => t.value === "profile" || t.value === "brawlers");
+// Друг видит и бои, но «Разбор» — личный, только для себя.
+const FRIEND_TABS = OWN_TABS.filter((t) => t.value !== "analysis");
 
 interface PlayerViewProps {
   playerTag: string;
@@ -38,13 +42,15 @@ export function PlayerView({ playerTag, readonly = false, renderNotFound }: Play
 
   // Друг видит и вкладку «Бои» (право проверяет сервер, тут — только показ).
   const isFriend = readonly && state.status === "ok" && state.data.full === true;
-  const tabs = !readonly || isFriend ? OWN_TABS : PUBLIC_TABS;
+  const tabs = !readonly ? OWN_TABS : isFriend ? FRIEND_TABS : PUBLIC_TABS;
 
   return (
     <div className="flex flex-col gap-4">
       {isFriend && <p className="-mb-2 text-xs text-tg-hint">👥 Вы друзья — тебе виден полный профиль</p>}
       <Tabs options={tabs} value={tab} onChange={setTab} />
-      {tab === "battles" && (!readonly || isFriend) ? (
+      {tab === "analysis" && !readonly ? (
+        <AnalysisTab />
+      ) : tab === "battles" && (!readonly || isFriend) ? (
         <BattlesTab playerTag={readonly ? playerTag : undefined} />
       ) : (
         <ProfileTabs tab={tab} state={state} readonly={readonly} />
