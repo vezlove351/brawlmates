@@ -6,10 +6,28 @@ import { formatNumber } from "@/lib/format";
 import type { TipCard } from "@/lib/tips";
 import { BrawlerIcon } from "./BrawlerIcon";
 
+const REASONS = [
+  { value: "rude", label: "Грубость" },
+  { value: "spam", label: "Спам" },
+  { value: "scam", label: "Обман" },
+  { value: "other", label: "Другое" },
+];
+
 // Карточка совета. actions — дополнительные кнопки снизу (жалоба и т. п.).
 export function TipCardView({ tip, actions }: { tip: TipCard; actions?: ReactNode }) {
   const [useful, setUseful] = useState({ count: tip.usefulCount, voted: tip.votedByMe });
   const [error, setError] = useState<string | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reported, setReported] = useState(false);
+
+  async function report(reason: string) {
+    setError(null);
+    const result = await apiPost("/api/tips/report", { tipId: tip.id, reason });
+    if (result.ok) {
+      setReported(true);
+      setReportOpen(false);
+    } else setError(result.error);
+  }
 
   async function markUseful() {
     setError(null);
@@ -66,6 +84,29 @@ export function TipCardView({ tip, actions }: { tip: TipCard; actions?: ReactNod
       </footer>
 
       {error && <p className="text-xs text-red-500">{error}</p>}
+
+      {/* Жалоба — на чужие опубликованные советы */}
+      {!actions && !tip.isMine && tip.status === "published" && (
+        reported ? (
+          <p className="text-center text-xs text-tg-hint">✓ Жалоба отправлена, спасибо!</p>
+        ) : reportOpen ? (
+          <div className="flex flex-wrap items-center gap-2 rounded-xl bg-tg-bg p-2 text-xs">
+            <span className="font-semibold">Что не так?</span>
+            {REASONS.map((r) => (
+              <button key={r.value} onClick={() => report(r.value)} className="rounded-full bg-tg-secondary-bg px-2.5 py-1 font-semibold">
+                {r.label}
+              </button>
+            ))}
+            <button onClick={() => setReportOpen(false)} className="text-tg-hint">
+              Отмена
+            </button>
+          </div>
+        ) : (
+          <button onClick={() => setReportOpen(true)} className="self-center text-xs font-semibold text-tg-hint">
+            ⚠️ Пожаловаться
+          </button>
+        )
+      )}
       {actions}
     </article>
   );

@@ -84,3 +84,11 @@ export async function notifyTeamInvite(
     { reply_markup: { inline_keyboard: [[{ text: "Посмотреть приглашение", url: teamInviteLink(invite.code) }]] } },
   );
 }
+
+// Решение модератора по совету — автору.
+export async function notifyTipDecision(authorId: number, approved: boolean) {
+  const text = approved
+    ? "💡 Твой совет прошёл проверку и опубликован в Brawlmates. Спасибо, что делишься опытом!"
+    : "💡 Твой совет не прошёл проверку. Попробуй написать по-другому: коротко, по делу и без лишнего.";
+  await getBot().api.sendMessage(authorId, text);
+}

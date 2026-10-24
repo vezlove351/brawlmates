@@ -5,7 +5,9 @@ import { useEffect, useState } from "react";
 import { apiPost } from "@/lib/api-client";
 import { findMode } from "@/lib/lfg";
 import { Button } from "./Button";
+import { Tabs } from "./Tabs";
 import { useTelegramStatus } from "./TelegramProvider";
+import { TipsModeration } from "./TipsModeration";
 
 interface ReportItem {
   postId: number;
@@ -35,8 +37,39 @@ const STATUS_LABELS: Record<string, string> = {
   removed: "удалена",
 };
 
-// Страница модерации: жалобы и решения. Доступ — только для ADMIN_IDS (проверяет сервер).
+// Страница модерации. Доступ — только для ADMIN_IDS (проверяет сервер при каждом запросе).
 export function AdminScreen() {
+  const telegram = useTelegramStatus();
+  const [tab, setTab] = useState<"lfg" | "tips">("lfg");
+  return (
+    <div className="mx-auto flex w-full max-w-md flex-col gap-4 p-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold">🛡️ Модерация</h1>
+        <Link href="/" className="text-sm font-semibold text-tg-link">
+          ← В приложение
+        </Link>
+      </div>
+      {telegram === "outside" ? (
+        <Note>Открой эту страницу внутри Telegram.</Note>
+      ) : (
+        <>
+          <Tabs
+            options={[
+              { value: "lfg", label: "Заявки LFG" },
+              { value: "tips", label: "💡 Советы" },
+            ]}
+            value={tab}
+            onChange={setTab}
+          />
+          {tab === "lfg" ? <LfgModeration /> : <TipsModeration />}
+        </>
+      )}
+    </div>
+  );
+}
+
+// Жалобы на заявки LFG.
+function LfgModeration() {
   const telegram = useTelegramStatus();
   const [items, setItems] = useState<ReportItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -64,15 +97,7 @@ export function AdminScreen() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-4 p-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">🛡️ Модерация</h1>
-        <Link href="/" className="text-sm font-semibold text-tg-link">
-          ← В приложение
-        </Link>
-      </div>
-
-      {telegram === "outside" && <Note>Открой эту страницу внутри Telegram.</Note>}
+    <div className="flex flex-col gap-4">
       {error && <Note>{error}</Note>}
       {!error && telegram !== "outside" && !items && (
         <div className="h-40 animate-pulse rounded-2xl bg-tg-secondary-bg" />
