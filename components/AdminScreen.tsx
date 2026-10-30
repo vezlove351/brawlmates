@@ -8,6 +8,7 @@ import { Button } from "./Button";
 import { Tabs } from "./Tabs";
 import { useTelegramStatus } from "./TelegramProvider";
 import { TipsModeration } from "./TipsModeration";
+import { TournamentsAdmin } from "./TournamentsAdmin";
 
 interface ReportItem {
   postId: number;
@@ -40,7 +41,7 @@ const STATUS_LABELS: Record<string, string> = {
 // Страница модерации. Доступ — только для ADMIN_IDS (проверяет сервер при каждом запросе).
 export function AdminScreen() {
   const telegram = useTelegramStatus();
-  const [tab, setTab] = useState<"lfg" | "tips">("lfg");
+  const [tab, setTab] = useState<"lfg" | "tips" | "tournaments">("lfg");
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-4 p-4">
       <div className="flex items-center justify-between">
@@ -55,13 +56,14 @@ export function AdminScreen() {
         <>
           <Tabs
             options={[
-              { value: "lfg", label: "Заявки LFG" },
+              { value: "lfg", label: "LFG" },
               { value: "tips", label: "💡 Советы" },
+              { value: "tournaments", label: "🏆 Турниры" },
             ]}
             value={tab}
             onChange={setTab}
           />
-          {tab === "lfg" ? <LfgModeration /> : <TipsModeration />}
+          {tab === "lfg" ? <LfgModeration /> : tab === "tips" ? <TipsModeration /> : <TournamentsAdmin />}
         </>
       )}
     </div>
