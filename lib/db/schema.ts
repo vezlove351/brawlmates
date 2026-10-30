@@ -414,5 +414,103 @@ export const tipReports = pgTable(
   (t) => [uniqueIndex("tip_reports_once_idx").on(t.tipId, t.reporterId)],
 );
 
+// ===================== Этап 4: турниры =====================
+
+// draft — черновик (видит только админ); registration — идёт запись;
+// live — турнир идёт; finished — завершён; cancelled — отменён.
+export type TournamentStatus = "draft" | "registration" | "live" | "finished" | "cancelled";
+// Кто может участвовать: все / подписчики канала / от N трофеев.
+export type TournamentCondition = "all" | "channel" | "min_trophies";
+
+export const tournaments = pgTable(
+  "tournaments",
+  {
+    id: serial("id").primaryKey(),
+    title: text("title").notNull(),
+    description: text("description"),
+    // Первый формат — Showdown: несколько раундов, очки за место.
+    format: text("format").$type<"showdown">().notNull().default("showdown"),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+    // Карту организатор пишет сам: для дружеских боёв API её не сообщает.
+    map: text("map"),
+    maxPlayers: integer("max_players").notNull().default(10),
+    condition: text("condition").$type<TournamentCondition>().notNull().default("all"),
+    minTrophies: integer("min_trophies"),
+    rounds: integer("rounds").notNull(),
+    // Очки за места: pointsByPlace[0] — за 1-е место, [1] — за 2-е и т. д.
+    pointsByPlace: integer("points_by_place").array().notNull(),
+    status: text("status").$type<TournamentStatus>().notNull().default("draft"),
+    createdBy: bigint("created_by", { mode: "number" }).references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("tournaments_status_starts_idx").on(t.status, t.startsAt),
+    check("tournaments_rounds_positive", sql`${t.rounds} between 1 and 10`),
+    check("tournaments_max_players", sql`${t.maxPlayers} between 2 and 10`),
+  ],
+);
+
+// Участники. Тег — снимок на момент записи: по нему ищем бои в battlelog.
+export const tournamentParticipants = pgTable(
+  "tournament_participants",
+  {
+    tournamentId: integer("tournament_id")
+      .notNull()
+      .references(() => tournaments.id, { onDelete: "cascade" }),
+    userId: bigint("user_id", { mode: "number" })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    playerTag: text("player_tag").notNull(),
+    joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.tournamentId, t.userId] }),
+    // Один игровой аккаунт — одно место в турнире.
+    uniqueIndex("tournament_participants_tag_idx").on(t.tournamentId, t.playerTag),
+  ],
+);
+
+// pending — ещё не начат; live — ссылка разослана, играют;
+// confirmed — организатор подтвердил места.
+export type RoundStatus = "pending" | "live" | "confirmed";
+
+export const tournamentRounds = pgTable(
+  "tournament_rounds",
+  {
+    id: serial("id").primaryKey(),
+    tournamentId: integer("tournament_id")
+      .notNull()
+      .references(() => tournaments.id, { onDelete: "cascade" }),
+    number: integer("number").notNull(),
+    // Ссылка-приглашение в дружескую комнату — бот рассылает её участникам.
+    roomLink: text("room_link"),
+    status: text("status").$type<RoundStatus>().notNull().default("pending"),
+    startedAt: timestamp("started_at", { withTimezone: true }),
+    // Время найденного в battlelog боя (если результаты подтянулись автоматически).
+    battleTime: timestamp("battle_time", { withTimezone: true }),
+    confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("tournament_rounds_number_idx").on(t.tournamentId, t.number)],
+);
+
+// Места и очки участников в раунде. auto — из battlelog, manual — организатор поправил.
+export const tournamentResults = pgTable(
+  "tournament_results",
+  {
+    roundId: integer("round_id")
+      .notNull()
+      .references(() => tournamentRounds.id, { onDelete: "cascade" }),
+    userId: bigint("user_id", { mode: "number" })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    // null — не сыграл в этом раунде (0 очков).
+    place: integer("place"),
+    points: integer("points").notNull().default(0),
+    source: text("source").$type<"auto" | "manual">().notNull().default("auto"),
+  },
+  (t) => [primaryKey({ columns: [t.roundId, t.userId] })],
+);
+
 export type User = typeof users.$inferSelect;
 export type BattleRow = typeof battles.$inferSelect;

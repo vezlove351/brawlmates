@@ -78,6 +78,13 @@
       "when": 1792839991599,
       "tag": "0010_outstanding_stone_men",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793371069601,
+      "tag": "0011_known_selene",
+      "breakpoints": true
     }
   ]
 }
