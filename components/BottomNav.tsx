@@ -9,7 +9,7 @@ const ITEMS: { value: Section; label: string; emoji: string }[] = [
   { value: "profile", label: "Профиль", emoji: "👤" },
   { value: "lfg", label: "Тиммейты", emoji: "🤝" },
   { value: "friends", label: "Друзья", emoji: "🧑‍🤝‍🧑" },
-  { value: "rating", label: "Рейтинг", emoji: "🏆" },
+  { value: "rating", label: "Турниры", emoji: "🏆" },
   { value: "tips", label: "Советы", emoji: "💡" },
 ];
 

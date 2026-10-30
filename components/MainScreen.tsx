@@ -4,7 +4,6 @@ import { useState } from "react";
 import { initData, useSignal } from "@telegram-apps/sdk-react";
 import { parseProfileStartParam } from "@/lib/links";
 import { BottomNav, type Section } from "./BottomNav";
-import { LeaderboardScreen } from "./LeaderboardScreen";
 import { Greeting } from "./Greeting";
 import { LfgScreen } from "./LfgScreen";
 import { LinkAccount } from "./LinkAccount";
@@ -13,6 +12,7 @@ import { PublicProfile } from "./PublicProfile";
 import { SettingsScreen } from "./SettingsScreen";
 import { SocialScreen } from "./SocialScreen";
 import { TipsScreen } from "./TipsScreen";
+import { TournamentsSection } from "./TournamentsSection";
 import { useAuth } from "./useAuth";
 
 export function MainScreen() {
@@ -25,9 +25,18 @@ export function MainScreen() {
   // Ссылки startapp=lfg (из канала) и startapp=friends (из уведомления) открывают нужный раздел.
   // startapp=team_<код> — приглашение в команду: открываем «Друзья» → «Команда».
   const teamInviteCode = startParam?.startsWith("team_") ? startParam.slice(5) : null;
+  // startapp=t_<id> — ссылка на турнир (из анонса в канале или от друга).
+  const tournamentMatch = startParam?.match(/^t_(\d+)$/);
+  const startTournamentId = tournamentMatch ? Number(tournamentMatch[1]) : null;
   const section: Section =
     chosenSection ??
-    (startParam === "lfg" ? "lfg" : startParam === "friends" || teamInviteCode ? "friends" : "profile");
+    (startParam === "lfg"
+      ? "lfg"
+      : startParam === "friends" || teamInviteCode
+        ? "friends"
+        : startTournamentId
+          ? "rating"
+          : "profile");
   // Профиль другого игрока, открытый внутри приложения (из друзей или ленты).
   const [viewingTag, setViewingTag] = useState<string | null>(null);
   const setSection = (s: Section) => {
@@ -96,7 +105,10 @@ export function MainScreen() {
       ) : section === "friends" ? (
         <SocialScreen inviteCode={teamInviteCode} onOpenProfile={setViewingTag} />
       ) : section === "rating" ? (
-        <LeaderboardScreen onOpenProfile={setViewingTag} />
+        <TournamentsSection
+          initialTournamentId={chosenSection === null ? startTournamentId : null}
+          onOpenProfile={setViewingTag}
+        />
       ) : section === "tips" ? (
         <TipsScreen />
       ) : (

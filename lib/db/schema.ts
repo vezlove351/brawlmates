@@ -443,6 +443,9 @@ export const tournaments = pgTable(
     createdBy: bigint("created_by", { mode: "number" }).references(() => users.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     finishedAt: timestamp("finished_at", { withTimezone: true }),
+    // Когда разослали напоминания участникам (чтобы не отправить дважды).
+    reminderHourSentAt: timestamp("reminder_hour_sent_at", { withTimezone: true }),
+    reminderTenSentAt: timestamp("reminder_ten_sent_at", { withTimezone: true }),
   },
   (t) => [
     index("tournaments_status_starts_idx").on(t.status, t.startsAt),

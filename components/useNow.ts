@@ -55,3 +55,15 @@ export function formatAgo(ms: number | null): string {
   if (hours < 24) return `${hours} ч назад`;
   return `${Math.floor(hours / 24)} дн. назад`;
 }
+
+// Обратный отсчёт: "2 дн. 3 ч", "1 ч 05 мин", "12 мин", "меньше минуты".
+export function formatCountdown(ms: number): string {
+  const minutes = Math.floor(ms / 60_000);
+  if (minutes < 1) return "меньше минуты";
+  const days = Math.floor(minutes / 1440);
+  const hours = Math.floor((minutes % 1440) / 60);
+  const mins = minutes % 60;
+  if (days > 0) return `${days} дн. ${hours} ч`;
+  if (hours > 0) return `${hours} ч ${String(mins).padStart(2, "0")} мин`;
+  return `${mins} мин`;
+}
